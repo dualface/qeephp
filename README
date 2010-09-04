@@ -24,3 +24,5 @@ CREATE TABLE `post` (
 $ cd tests
 $ phpunit qeephp
 
+单元测试产生的日志文件放在 tests/tmp 目录中
+
