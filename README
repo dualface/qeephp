@@ -1,3 +1,26 @@
 QeePHP v3
 
 
+
+== 运行单元测试 ==
+
+创建两个数据库：
+
+qeephp_test_db1
+qeephp_test_db2
+
+创建数据表：
+
+CREATE TABLE `post` (
+  `post_id` int(11) NOT NULL AUTO_INCREMENT,
+  `title` varchar(80) NOT NULL,
+  `author` varchar(20) DEFAULT NULL,
+  `click_count` int(11) DEFAULT '0',
+  PRIMARY KEY (`post_id`),
+  KEY `title` (`title`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+
+$ cd tests
+$ phpunit qeephp
+
