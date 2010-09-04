@@ -2,18 +2,15 @@
 
 namespace qeephp\storage;
 
-/**
- * 模型基础类，提供一些常用功能的实现
- */
 abstract class BaseModel implements IStorageDefine
 {
     /**
-     * 指示模型对象实例是否是新创建的
+     * 指示模型对象实例是否来自于存储源
      *
      * @var bool
      * @internal
      */
-    public $__is_dirty = true;
+    public $__is_new = true;
 
     /**
      * 对象实例从存储服务中读取出来时的值
@@ -49,17 +46,34 @@ abstract class BaseModel implements IStorageDefine
     }
 
     /**
-     * 指示模型是否未写入缓存
+     * 指示模型对象实例是否来自于存储源
+     *
+     * 如果模型对象实例是通过 find*() 方法获得的，则 is_new() 返回 false，否则返回 true。
      *
      * @return bool
      */
-    function is_dirty()
+    function is_new()
     {
-        return $this->__is_dirty;
+        return $this->__is_new;
     }
 
     /**
      * 指示模型属性是否已经发生改变
+     *
+     * @code
+     * $post = Post::find_one($post_id);
+     * // 修改前 title 属性的值是 old title，该值为原始版本
+     * // 修改后，title 属性的值是 new title，该值为修改版本
+     * $post->title = 'new title';
+     *
+     * // changed() 方法返回 true
+     * assert($post->changed() == true);
+     *
+     * // 在调用 save() 方法后，修改后的属性值会被保存到数据库中
+     * // 此时 changed() 返回 false
+     * $post->save();
+     * assert($post->changed() == false);
+     * @endcode
      *
      * @return bool
      */
@@ -93,7 +107,7 @@ abstract class BaseModel implements IStorageDefine
      *
      * @retrun array
      */
-    function original()
+    function origin()
     {
         return $this->__props;
     }
@@ -166,7 +180,7 @@ abstract class BaseModel implements IStorageDefine
      */
     function save()
     {
-        return $this->is_dirty() ? Repo::create($this) : Repo::update($this);
+        return $this->is_new() ? Repo::create($this) : Repo::update($this);
     }
 
     /**
@@ -235,14 +249,14 @@ abstract class BaseModel implements IStorageDefine
         {
             unset($this->$prop);
         }
-        $this->__is_dirty = false;
+        $this->__is_new = false;
         $this->__props = $props;
         $this->__changes = array();
     }
 
     function __save($is_create, $id = null)
     {
-        $this->__is_dirty = false;
+        $this->__is_new = false;
         $meta = $this->my_meta();
         $this->__props = array_merge($this->__props, $this->__changes);
         $this->__changes = array();

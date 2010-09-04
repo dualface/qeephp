@@ -187,7 +187,7 @@ abstract class Repo implements IStorageDefine
     {
         $meta = $model->my_meta();
         $event = $meta->raise_event(self::BEFORE_SAVE_EVENT, null, $model);
-        $is_create = $model->is_dirty();
+        $is_create = $model->is_new();
         $result = ($is_create) ? self::create($model, $meta) : self::update($model, $meta);
         $meta->raise_event(self::AFTER_SAVE_EVENT, array($result), $model);
         $model->__save($is_create, ($is_create) ? $result : null);

@@ -211,12 +211,12 @@ class MySQLAdapter implements IAdapter, IStorageDefine
             unset($changes[$name]);
         }
 
-        $original = $model->original();
+        $origin = $model->origin();
         $update_cond = array();
         if (($meta->update & self::UPDATE_CHECK_ALL)
             || ($meta->update & self::UPDATE_CHECK_CHANGED))
         {
-            $update_cond = $original;
+            $update_cond = $origin;
             if ($meta->update & self::UPDATE_CHECK_CHANGED)
             {
                 $u = $model->changes();
@@ -259,17 +259,17 @@ class MySQLAdapter implements IAdapter, IStorageDefine
             switch ($policy)
             {
             case IStorageDefine::UPDATE_PROP_INCR:
-                $changes[$name] = new Expr("[{$name}] + ?", $changes[$name] - $original[$name]);
+                $changes[$name] = new Expr("[{$name}] + ?", $changes[$name] - $origin[$name]);
                 break;
             case IStorageDefine::UPDATE_PROP_GTE_ZERO:
             case IStorageDefine::UPDATE_PROP_GT_ZERO:
-                if ($original[$name] < $changes[$name])
+                if ($origin[$name] < $changes[$name])
                 {
-                    $changes[$name] = new Expr("[{$name}] + ?", $changes[$name] - $original[$name]);
+                    $changes[$name] = new Expr("[{$name}] + ?", $changes[$name] - $origin[$name]);
                 }
                 else
                 {
-                    $offset = $original[$name] - $changes[$name];
+                    $offset = $origin[$name] - $changes[$name];
                     $changes[$name] = new Expr("[{$name}] - ?", $offset);
                     $op = ($policy == IStorageDefine::UPDATE_PROP_GTE_ZERO) ? '>=' : '>';
                     $update_cond[] = new Expr("[{$name}] {$op} ?", $offset);
