@@ -76,10 +76,14 @@ abstract class Repo implements IStorageDefine
      */
     static function find_one($class, $cond)
     {
+        $meta = Meta::instance($class);
+        if (is_int($cond))
+        {
+            $cond = array($meta->idname => $cond);
+        }
         $cache_key = self::cache_key($class, $cond);
         if (isset(self::$_objects[$cache_key])) return self::$_objects[$cache_key];
-
-        $meta = Meta::instance($class);
+        
         $event = $meta->raise_event(self::BEFORE_FINDONE_EVENT, array($cond));
         if ($event && $event->completed && is_array($event->result))
         {
