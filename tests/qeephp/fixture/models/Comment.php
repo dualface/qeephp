@@ -5,7 +5,6 @@ namespace tests\qeephp\fixture\models;
 use qeephp\storage\BaseModel;
 
 /**
- * @domain default
  * @collection comment
  *
  * @readonly
@@ -13,9 +12,8 @@ use qeephp\storage\BaseModel;
  */
 class Comment extends BaseModel
 {
-    const TEST_DOMAIN = 'default';
     const TEST_COLLECTION = 'comment';
-    const TEST_UPDATE = 0x000a; // Meta::UPDATE_CHANGED_PROPS | Meta::UPDATE_CHECK_CHANGED;
+    const TEST_UPDATE = 0x0009; // Meta::UPDATE_ALL_PROPS | Meta::UPDATE_CHECK_CHANGED;
     const TEST_READONLY = true;
     const TEST_IDNAME = 'comment_id';
     const TEST_AUTOINCR_IDNAME = 'comment_id';

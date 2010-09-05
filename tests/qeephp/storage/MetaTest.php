@@ -89,7 +89,6 @@ class MetaTest extends TestCase
 
         // class
         $meta = new Meta('tests\\qeephp\\fixture\\models\\Comment');
-        $this->assertEquals(Comment::TEST_DOMAIN,       $meta->domain);
         $this->assertEquals(Comment::TEST_COLLECTION,   $meta->collection);
         $this->assertEquals(Comment::TEST_UPDATE,       $meta->update);
         $this->assertEquals(Comment::TEST_READONLY,     $meta->readonly);
