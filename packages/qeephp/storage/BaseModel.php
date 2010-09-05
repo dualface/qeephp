@@ -10,7 +10,7 @@ abstract class BaseModel implements IStorageDefine
      * @var bool
      * @internal
      */
-    public $__is_new = true;
+    private $__is_new = true;
 
     /**
      * 对象实例从存储服务中读取出来时的值
@@ -18,7 +18,7 @@ abstract class BaseModel implements IStorageDefine
      * @var array
      * @internal
      */
-    public $__props = array();
+    private $__props = array();
 
     /**
      * 改动过的属性值
@@ -26,7 +26,7 @@ abstract class BaseModel implements IStorageDefine
      * @var array
      * @internal
      */
-    public $__changes = array();
+    private $__changes = array();
 
     /**
      * 返回模型的主键值，如果有多个主键，则返回包含多个主键的数组
