@@ -190,7 +190,6 @@ abstract class Repo implements IStorageDefine
         $is_create = $model->is_new();
         $result = ($is_create) ? self::create($model, $meta) : self::update($model, $meta);
         $meta->raise_event(self::AFTER_SAVE_EVENT, array($result), $model);
-        $model->__save($is_create, ($is_create) ? $result : null);
         return $result;
     }
 
@@ -209,8 +208,9 @@ abstract class Repo implements IStorageDefine
         $record = $meta->props_to_fields($model->__to_array());
         $adapter = self::select_adapter($meta->domain(), $model);
         $id = $adapter->insert($meta->collection, $record);
+        $model->__save(true, $id);
         $meta->raise_event(self::AFTER_CREATE_EVENT, array($id), $model);
-        return $id;
+        return $model->id();
     }
 
     /**
@@ -228,6 +228,7 @@ abstract class Repo implements IStorageDefine
         if (!$meta) $meta = $model->my_meta();
         $meta->raise_event(self::BEFORE_UPDATE_EVENT, null, $model);
         $result = self::select_adapter($meta->domain(), $model)->update_model($model, $meta);
+        if ($result) $model->__save(false);
         $meta->raise_event(self::AFTER_UPDATE_EVENT, array($result), $model);
         return $result;
     }
