@@ -265,10 +265,13 @@ class MySQLAdapterTest extends TestCase
          */
         $result1 = $mysql->del('post', array('post_id' => 2));
         $result2 = $mysql->del('post', 'post_id >= 8 AND post_id <= 10');
+        // 删除所有记录
+        $result3 = $mysql->del('post', null);
         // #END EXAMPLE
 
         $this->assertEquals(1, $result1);
         $this->assertEquals(3, $result2);
+        $this->assertEquals(6, $result3);
     }
 
     function test_commit()
