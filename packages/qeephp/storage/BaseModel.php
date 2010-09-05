@@ -28,6 +28,16 @@ abstract class BaseModel implements IStorageDefine
      */
     private $__changes = array();
 
+    function __construct()
+    {
+        $meta = static::meta();
+        foreach ($meta->props_to_fields as $name => $field)
+        {
+            $this->__props[$name] = $this->$name;
+            unset($this->$name);
+        }
+    }
+
     /**
      * 返回模型的主键值，如果有多个主键，则返回包含多个主键的数组
      *
