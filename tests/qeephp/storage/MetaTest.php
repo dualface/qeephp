@@ -119,7 +119,7 @@ class MetaTest extends TestCase
         $props = array('postId', 'rev_id');
         $this->_check_props($props, $meta);
 
-        $this->assertEquals(array('rev_id', 'postId'), $meta->idname);
+        $this->assertEquals(array('postId', 'rev_id'), $meta->idname);
         $this->assertEquals('rev_id', $meta->autoincr_idname);
         $this->assertEquals(IStorageDefine::UPDATE_ALL_PROPS, $meta->update);
         $this->assertTrue($meta->composite_id);
