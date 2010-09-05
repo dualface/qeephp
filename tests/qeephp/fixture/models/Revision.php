@@ -12,6 +12,14 @@ use qeephp\storage\BaseModel;
 class Revision extends BaseModel
 {
     /**
+     *
+     * @var int
+     * @field post_id
+     * @id
+     */
+    public $postId;
+
+    /**
      * 主键
      *
      * @var int
@@ -20,11 +28,13 @@ class Revision extends BaseModel
     public $rev_id;
 
     /**
-     *
-     * @var int
-     * @field post_id
-     * @id
+     * @var text
      */
-    public $postId;
+    public $body;
+
+    /**
+     * @var int
+     */
+    public $created;
 }
 

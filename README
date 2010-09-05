@@ -29,6 +29,14 @@ CREATE TABLE `comment` (
   PRIMARY KEY (`comment_id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
+CREATE TABLE `revision` (
+  `rev_id` int(11) NOT NULL AUTO_INCREMENT,
+  `post_id` int(11) NOT NULL,
+  `body` text NOT NULL,
+  `created` int(11) NOT NULL,
+  PRIMARY KEY (`rev_id`,`post_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 $ cd tests
 $ phpunit qeephp
 
