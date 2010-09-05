@@ -318,7 +318,7 @@ abstract class Inspector implements IStorageDefine
                 $data['idname'][] = $name;
                 if ($prop['autoincr'])
                 {
-                    if ($data['autoincr_idname'])
+                    if (!empty($data['autoincr_idname']))
                     {
                         throw ModelError::invalid_config_error($class, 'autoincr_idname');
                     }
