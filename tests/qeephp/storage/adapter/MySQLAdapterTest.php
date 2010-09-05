@@ -274,13 +274,26 @@ class MySQLAdapterTest extends TestCase
         $this->assertEquals(6, $result3);
     }
 
+    /**
+     * 提交数据库事务
+     *
+     * @api MySQLAdapter::begin()
+     * @api MySQLAdapter::commit()
+     */
     function test_commit()
     {
-        $this->_mysql->begin();
+        $mysql = $this->_mysql;
+        /**
+         * #BEGIN EXAMPLE
+         * 
+         * 事务中所有的查询都成功后，commit() 方法才能成功执行。
+         */
+        $mysql->begin();
         $title = "new post " . mt_rand(1, 999);
         $new_post = array('title' => $title);
-        $new_post_id = $this->_mysql->insert('post', $new_post);
-        $this->_mysql->commit();
+        $new_post_id = $mysql->insert('post', $new_post);
+        $mysql->commit();
+        // #END EXAMPLE
 
         $post = $this->_mysql->find_one('post', array('post_id' => $new_post_id));
         $this->assertType('array', $post);
