@@ -255,10 +255,6 @@ abstract class BaseModel implements IStorageDefine
 
     function __read(array $props)
     {
-        foreach ($props as $prop => $value)
-        {
-            unset($this->$prop);
-        }
         $this->__is_new = false;
         $this->__props = $props;
         $this->__changes = array();
@@ -272,9 +268,16 @@ abstract class BaseModel implements IStorageDefine
         $this->__changes = array();
         if ($is_create)
         {
-            if (is_array($meta->composite_id))
+            if ($meta->composite_id)
             {
-                $this->__props = array_merge($this->__props, $id);
+                if (is_array($id))
+                {
+                    $this->__props = array_merge($this->__props, $id);
+                }
+                else
+                {
+                    $this->__props[$meta->autoincr_idname] = $id;
+                }
             }
             else
             {
