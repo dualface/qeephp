@@ -170,59 +170,36 @@ class RepoTest extends TestCase
     }
 
     /**
-     * 查询多个对象
+     * 查询指定主键值的多个对象
      *
      * @api Repo::find_multi()
      */
     function test_find_multi()
     {
         $post_class = 'tests\\qeephp\\fixture\\models\\Post';
-        $rev_class = 'tests\\qeephp\\fixture\\models\\Revision';
-        $revisions_recordset = $this->_create_revisions();
-        $rev_id_list = array();
-        foreach ($revisions_recordset as $rev)
-        {
-            $rev_id_list[] = array('post_id' => 1, 'rev_id' => $rev['rev_id']);
-        }
 
         /**
          * #BEGIN EXAMPLE
          *
          * 查询指定主键值的多个对象
          *
-         * 对于只有一个主键的对象，可以将主键值放入数组进行查询。
+         * find_multi() 只支持使用一个主键的对象。$cond 只能是包含多个主键值的数组。
+         *
+         * 与 find_one() 一样，find_multi() 会缓存查询到的对象，并尽可能减少不必要的存储查询操作。
          */
         $post_id_list = array(1, 3, 5);
         $posts = Repo::find_multi($post_class, $post_id_list);
-
-        // 如果查询的属性不是主键，则必须在查询条件中指定属性名称
-        $post_title_list = array(
-            'title' => 'post 1',
-            'title' => 'post 3',
-            'title' => 'post 5',
-        );
-        $posts2 = Repo::find_multi($post_class, $post_title_list);
-
-        /**
-         *  如果要用多个属性做查询条件，则 $cond 参数必须是二维数组
-         *
-         * $rev_id_list = array(
-         *     array('post_id' => $post_id, 'rev_id' => $rev_id),
-         *     ...
-         * );
-         */
-        $revsions = Repo::find_multi($rev_class, $rev_id_list);
+        $other_posts = Repo::find_multi($post_class, $post_id_list);
         // #END EXAMPLE
-
         $this->assertEquals(3, count($posts));
         $id = 1;
         foreach ($posts as $post_id => $post)
         {
             $this->_check_post($post, $post_id);
             $this->assertEquals($id, $post_id);
+            $this->assertTrue($post === $other_posts[$post_id]);
             $id += 2;
         }
-        $this->assertEquals($posts, $posts2);
     }
 
     /**
