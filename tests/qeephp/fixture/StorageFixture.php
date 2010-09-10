@@ -50,5 +50,24 @@ class StorageFixture
         }
         return $recordset;
     }
+
+    static function revisions_recordset($begin_post_id = 1)
+    {
+        $recordset = array();
+        $created = time();
+        for ($post_id = $begin_post_id; $post_id < $begin_post_id + 5; $post_id++)
+        {
+            $num_rev = mt_rand(1, 5);
+            for ($i = 0; $i < $num_rev; $i++)
+            {
+                $recordset[] = array(
+                    'post_id' => $post_id,
+                    'body'    => sprintf('post %u rev %u', $post_id, $i),
+                    'created' => $created,
+                );
+            }
+        }
+        return $recordset;
+    }
 }
 
