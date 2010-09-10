@@ -181,6 +181,23 @@ abstract class Repo implements IStorageDefine
     }
 
     /**
+     * 构造一个查询对象
+     *
+     * @param string $class
+     * @param mixed $cond
+     *
+     * @return IAdapterFinder
+     */
+    static function find($class, $cond)
+    {
+        $meta = Meta::instance($class);
+        $adapter = self::select_adapter($meta->domain(), $cond);
+        $finder = $adapter->find($meta->collection, $cond, null, $meta->props_to_fields);
+        $finder->set_model_class($class);
+        return $finder;
+    }
+
+    /**
      * 保存一个对象，如果是新建对象返回对象主键值，更新则返回更新情况
      *
      * @param BaseModel $model
