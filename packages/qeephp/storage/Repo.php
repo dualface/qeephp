@@ -3,6 +3,7 @@
 namespace qeephp\storage;
 
 use qeephp\Config;
+use qeephp\storage\adapter\IAdapterFinder;
 
 abstract class Repo implements IStorageDefine
 {
@@ -140,14 +141,14 @@ abstract class Repo implements IStorageDefine
     }
 
     /**
-     * 查找多个主键值的对象
+     * 查找多个对象
      *
      * @param string $class
-     * @param array $id_list
+     * @param array $cond
      *
      * @return array
      */
-    static function find_multi($class, array $id_list)
+    static function find_multi($class, array $cond)
     {
         $meta = Meta::instance($class);
         if ($meta->composite_id)
@@ -156,27 +157,34 @@ abstract class Repo implements IStorageDefine
         }
 
         $models = array();
-        foreach ($id_list as $offset => $id)
+        foreach ($cond as $offset => $id)
         {
-            $key = self::cache_key($class, $id);
+            if (is_string($offset))
+            {
+                $key = self::cache_key($class, array($offset => $id));
+            }
+            else
+            {
+                $key = self::cache_key($class, $id);
+            }
             if (isset(self::$_objects[$key]))
             {
                 $models[$id] = self::$_objects[$key];
-                unset($id_list[$offset]);
+                unset($cond[$offset]);
             }
         }
-        if (empty($id_list)) return $models;
+        if (empty($cond)) return $models;
 
-        $event = $meta->raise_event(self::BEFORE_FINDMULTI_EVENT, array($id_list));
+        $event = $meta->raise_event(self::BEFORE_FINDMULTI_EVENT, array($cond));
         if ($event && $event->completed && is_array($event->result))
         {
             $records = $event->result;
-            $not_founds = array_diff($id_list, array_keys($records));
+            $not_founds = array_diff($cond, array_keys($records));
         }
         else
         {
             $records = array();
-            $not_founds = $id_list;
+            $not_founds = $cond;
         }
 
         if (!empty($not_founds))
@@ -190,7 +198,7 @@ abstract class Repo implements IStorageDefine
         }
 
         $more_models = self::records_to_models($meta, $records);
-        $meta->raise_event(self::AFTER_FINDMULTI_EVENT, array($id_list, $more_models, $records));
+        $meta->raise_event(self::AFTER_FINDMULTI_EVENT, array($cond, $more_models, $records));
 
         foreach ($more_models as $id => $model)
         {
@@ -349,7 +357,7 @@ abstract class Repo implements IStorageDefine
             }
             $model = new $class();
             /* @var $model BaseModel */
-            $model->__read(self::record_to_props($meta, $record));
+            $model->__read($meta->fields_to_props($record));
             $models[$id] = $model;
         }
 
