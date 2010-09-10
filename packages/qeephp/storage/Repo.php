@@ -328,12 +328,15 @@ abstract class Repo implements IStorageDefine
         return $result;
     }
 
-    static function clean_cache()
+    static function clean_cache($class = null, $id = null)
     {
-        self::$_objects = array();
-    }
-
+        if (!is_null($id))
         {
+            unset(self::$_objects[self::cache_key($class, $id)]);
+        }
+        else
+        {
+            self::$_objects = array();
         }
     }
 
