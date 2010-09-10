@@ -334,15 +334,15 @@ abstract class Repo implements IStorageDefine
         return $models;
     }
 
-    static function cache_key($class, $cond)
+    static function cache_key($class, $id)
     {
-        if (is_array($cond))
+        if (is_array($id))
         {
-            $key = http_build_query($cond);
+            $key = http_build_query($id);
         }
         else
         {
-            $key = (string)$cond;
+            $key = (string)$id;
         }
 
         return "{$class}.{$key}";
