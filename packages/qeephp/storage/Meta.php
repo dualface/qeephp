@@ -464,6 +464,44 @@ class Meta implements IStorageDefine
     }
 
     /**
+     * 将字段数组转换为属性数组，并过滤掉不存在的属性
+     *
+     * @param array $record
+     * 
+     * @return array
+     */
+    function fields_to_props(array $record)
+    {
+        $return = array();
+        foreach ($record as $field => $value)
+        {
+            if (!isset($this->fields_to_props[$field])) continue;
+            $prop = $this->fields_to_props[$field];
+            switch ($this->props[$prop]['type'])
+            {
+            case self::TYPE_INT:
+            case self::TYPE_SMALLINT:
+            case self::TYPE_SERIAL:
+                $value = intval($value);
+                break;
+
+            case self::TYPE_FLOAT:
+                $value = floatval($value);
+                break;
+
+            case self::TYPE_BOOL:
+                $value = ($value) ? true : false;
+                break;
+
+            default:
+                $value = (string)$value;
+            }
+            $return[$prop] = $value;
+        }
+        return $return;
+    }
+
+    /**
      * 初始化 Meta 对象
      */
     private function _init()

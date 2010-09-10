@@ -286,35 +286,8 @@ abstract class Repo implements IStorageDefine
         self::$_objects = array();
     }
 
-    static function record_to_props(Meta $meta, array $record)
-    {
-        $return = array();
-        foreach ($record as $field => $value)
         {
-            if (!isset($meta->fields_to_props[$field])) continue;
-            $prop = $meta->fields_to_props[$field];
-            switch ($meta->props[$prop]['type'])
-            {
-            case self::TYPE_INT:
-            case self::TYPE_SMALLINT:
-            case self::TYPE_SERIAL:
-                $value = intval($value);
-                break;
-
-            case self::TYPE_FLOAT:
-                $value = floatval($value);
-                break;
-
-            case self::TYPE_BOOL:
-                $value = ($value) ? true : false;
-                break;
-
-            default:
-                $value = (string)$value;
-            }
-            $return[$prop] = $value;
         }
-        return $return;
     }
 
     static function records_to_models(Meta $meta, array $records)
