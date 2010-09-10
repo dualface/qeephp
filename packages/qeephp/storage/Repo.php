@@ -67,7 +67,7 @@ abstract class Repo implements IStorageDefine
     }
 
     /**
-     * 查找指定主键的对象
+     * 查找一个对象
      *
      * @param string $class
      * @param mixed $cond
@@ -79,11 +79,11 @@ abstract class Repo implements IStorageDefine
         $meta = Meta::instance($class);
         if (is_int($cond))
         {
+            $cache_key = self::cache_key($class, $cond);
+            if (isset(self::$_objects[$cache_key])) return self::$_objects[$cache_key];
             $cond = array($meta->idname => $cond);
         }
-        $cache_key = self::cache_key($class, $cond);
-        if (isset(self::$_objects[$cache_key])) return self::$_objects[$cache_key];
-        
+
         $event = $meta->raise_event(self::BEFORE_FINDONE_EVENT, array($cond));
         if ($event && $event->completed && is_array($event->result))
         {
@@ -101,6 +101,28 @@ abstract class Repo implements IStorageDefine
             throw StorageError::entity_not_found_error($class, $cond);
         }
 
+        /**
+         * 查找到数据后，会以主键值判断该数据是否已经在对象缓存中。如果缓存中找到了数据，则不构造新的模型对象，
+         * 而是直接返回缓存的对象。也就是说这会导致读取的数据被抛弃。
+         *
+         * 因此为了获得最好的性能，应该总是使用主键值调用 find_one() 方法进行查询。
+         */
+        $props = $meta->fields_to_props($record);
+        if ($meta->composite_id)
+        {
+            $id = array();
+            foreach ($meta->idname as $idname)
+            {
+                $id[$idname] = $props[$idname];
+            }
+        }
+        else
+        {
+            $id = $props[$meta->idname];
+        }
+        $cache_key = self::cache_key($class, $id);
+        if (isset(self::$_objects[$cache_key])) return self::$_objects[$cache_key];
+
         if ($meta->use_extends)
         {
             $by = $meta->extends['by'];
@@ -110,10 +132,10 @@ abstract class Repo implements IStorageDefine
 
         $model = new $class();
         /* @var $model BaseModel */
-        $model->__read(self::record_to_props($meta, $record));
-        self::$_objects[$cache_key] = $model;
-
+        $model->__read($props);
         $meta->raise_event(self::AFTER_FINDONE_EVENT, array($cond, $model, $record));
+
+        self::$_objects[$cache_key] = $model;
         return $model;
     }
 
