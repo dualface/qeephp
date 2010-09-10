@@ -180,7 +180,7 @@ abstract class BaseModel implements IStorageDefine
      */
     static function find($cond)
     {
-        return Repo::find(get_called_class(), func_get_args());
+        return Repo::find(get_called_class(), $cond);
     }
 
     /**
