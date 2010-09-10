@@ -105,8 +105,6 @@ abstract class Repo implements IStorageDefine
         /**
          * 查找到数据后，会以主键值判断该数据是否已经在对象缓存中。如果缓存中找到了数据，则不构造新的模型对象，
          * 而是直接返回缓存的对象。也就是说这会导致读取的数据被抛弃。
-         *
-         * 因此为了获得最好的性能，应该总是使用主键值调用 find_one() 方法进行查询。
          */
         $props = $meta->fields_to_props($record);
         if ($meta->composite_id)
@@ -124,19 +122,9 @@ abstract class Repo implements IStorageDefine
         $cache_key = self::cache_key($class, $id);
         if (isset(self::$_objects[$cache_key])) return self::$_objects[$cache_key];
 
-        if ($meta->use_extends)
-        {
-            $by = $meta->extends['by'];
-            $type = $record[$by];
-            $class = $meta->extends['classes'][$type];
-        }
-
-        $model = new $class();
-        /* @var $model BaseModel */
-        $model->__read($props);
-        $meta->raise_event(self::AFTER_FINDONE_EVENT, array($cond, $model, $record));
-
+        $model = self::props_to_model($meta, $props);
         self::$_objects[$cache_key] = $model;
+        $meta->raise_event(self::AFTER_FINDONE_EVENT, array($cond, $model, $record));
         return $model;
     }
 
@@ -159,18 +147,12 @@ abstract class Repo implements IStorageDefine
         $models = array();
         foreach ($cond as $offset => $id)
         {
-            if (is_string($offset))
+            $cache_key = self::cache_key($class, $id);
+            if (isset(self::$_objects[$cache_key]))
             {
-                $key = self::cache_key($class, array($offset => $id));
-            }
-            else
-            {
-                $key = self::cache_key($class, $id);
-            }
-            if (isset(self::$_objects[$key]))
-            {
-                $models[$id] = self::$_objects[$key];
+                $models[$id] = self::$_objects[$cache_key];
                 unset($cond[$offset]);
+                continue;
             }
         }
         if (empty($cond)) return $models;
@@ -191,22 +173,30 @@ abstract class Repo implements IStorageDefine
         {
             $idfield = $meta->props_to_fields[$meta->idname];
             $adapter = self::select_adapter($meta->domain());
-            $adapter->find($meta->collection, array($idfield => array($not_founds)))
-                    ->each(function ($record) use (& $records, $idfield) {
-                        $records[$record[$idfield]] = $record;
-                    });
+            $finder  = $adapter->find($meta->collection, array($idfield => array($not_founds)));
+            $finder->each(function ($record) use (& $records, $idfield) {
+                $records[$record[$idfield]] = $record;
+            });
         }
 
-        $more_models = self::records_to_models($meta, $records);
-        $meta->raise_event(self::AFTER_FINDMULTI_EVENT, array($cond, $more_models, $records));
-
-        foreach ($more_models as $id => $model)
+        $more_models = array();
+        foreach ($records as $record)
         {
-            $key = self::cache_key($class, $id);
-            self::$_objects[$key] = $model;
-            $models[$id] = $model;
-        }
+            $props = $meta->fields_to_props($record);
+            $id = $props[$meta->idname];
+            $cache_key = self::cache_key($class, $id);
+            if (isset(self::$_objects[$cache_key]))
+            {
+                $models[$id] = self::$_objects[$cache_key];
+                continue;
+            }
 
+            $model = self::props_to_model($meta, $props);
+            self::$_objects[$cache_key] = $model;
+            $models[$id] = $model;
+            $more_models[$id] = $model;
+        }
+        $meta->raise_event(self::AFTER_FINDMULTI_EVENT, array($cond, $more_models, $records));
         return $models;
     }
 
@@ -340,31 +330,22 @@ abstract class Repo implements IStorageDefine
         }
     }
 
-    static function records_to_models(Meta $meta, array $records)
+    static function props_to_model(Meta $meta, array $props)
     {
-        $models = array();
-        $idname = $meta->idname;
-
         if ($meta->use_extends)
         {
             $by = $meta->extends['by'];
+            $type = $props[$by];
+            $class = $meta->extends['classes'][$type];
         }
-        $class = $meta->class;
-
-        foreach ($records as $id => $record)
+        else
         {
-            if ($meta->use_extends)
-            {
-                $type = $record[$by];
-                $class = $meta->extends['classes'][$type];
-            }
-            $model = new $class();
-            /* @var $model BaseModel */
-            $model->__read($meta->fields_to_props($record));
-            $models[$id] = $model;
+            $class = $meta->class;
         }
-
-        return $models;
+        $model = new $class();
+        /* @var $model BaseModel */
+        $model->__read($props);
+        return $model;
     }
 
     static function cache_key($class, $id)
