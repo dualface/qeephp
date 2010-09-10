@@ -5,6 +5,8 @@ namespace tests\qeephp\storage;
 use tests\includes\TestCase;
 use tests\qeephp\fixture\StorageFixture;
 use tests\qeephp\fixture\models\Post;
+use tests\qeephp\fixture\models\Comment;
+use tests\qeephp\fixture\models\Revision;
 
 use qeephp\storage\Repo;
 use qeephp\tools\Logger;
@@ -32,14 +34,24 @@ class RepoTest extends TestCase
          *
          * 设定指定存储域的调度方法，并通过 select_adapter() 在运行时选择实际的存储适配器对象。
          *
-         * -  自定义的调度函数对主键值取模，并返回存储域的节点名字。
-         *    select_adapter() 根据调度函数的返回值构造完整的存储域名称，并返回相应的存储对象。
+         * -  自定义的调度函数接受两个参数：存储域名称和附加参数。附加参数可能是主键值或模型对象实例。
+         *    调度函数根据参数返回存储域节点名称，select_adapter() 根据调度函数的返回值构造完整的存储域名称，
+         *    并返回相应的存储对象。
          *
          * -  例如主键值＝1，下述调度函数会产生节点名称 node1。最后实际的存储域名称就是 $domain.node1。
          *
          * -  如果指定的存储域没有指定调度函数，则返回该存储域对应的存储对象。
          */
-        $dispatcher = function ($domain, $id) {
+        $dispatcher = function ($domain, $arg) {
+            if ($arg instanceof BaseModel)
+            {
+                // 没有考虑复合主键的情况
+                $id = intval($arg->id());
+            }
+            else
+            {
+                $id = intval($arg);
+            }
             $node_index = (($id - 1) % 2) + 1;
             return "node{$node_index}";
         };
@@ -60,23 +72,148 @@ class RepoTest extends TestCase
         $this->assertFalse($adapter === $adapter_second);
     }
 
+    /**
+     * 查询一个对象
+     *
+     * @api Repo::find_one()
+     * @api Repo::clean_cache();
+     */
     function test_find_one()
     {
-        $post_id = 1;
         $class = 'tests\\qeephp\\fixture\\models\\Post';
+
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 查询指定主键值的对象
+         *
+         * 如果 find_one() 的第二个参数是整数，则暗示以该值为主键值进行查询。
+         */
+        $post_id = 5;
         $post = Repo::find_one($class, $post_id);
+        // #END EXAMPLE
         $this->_check_post($post, $post_id);
 
-        $cond = array('post_id > ? AND post_id < ?', 1, 3);
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 使用更复杂的条件查询对象
+         *
+         * find_one() 方法和其他对象的 find_one() 方法一样支持多样化的查询条件。
+         * 参考 MySQLAdapter::find_one()。
+         */
+        $cond = array('post_id > ? AND post_id < ?', 3, 5);
         $post = Repo::find_one($class, $cond);
-        $this->_check_post($post, 2);
+        // #END EXAMPLE
+        $this->_check_post($post, 4);
+
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * Repo 的对象缓存
+         *
+         * 在当前请求执行过程中，曾经查询过的对象都会记录在 Repo 的对象缓存中，
+         * 因此对同一个对象的重复查询不会返回对象的多个实例。
+         *
+         * 要避免对同一对象查询时造成多次存储查询操作，应该总是使用主键值（整数）
+         * 或仅包含主键值的数组作为查询条件。
+         */
+        $post_id = 2;
+        // 以下三次 find_one() 调用仅会进行一次存储查询操作
+        $post = Repo::find_one($class, $post_id);
+        $post2 = Repo::find_one($class, $post_id);
+        $post3 = Repo::find_one($class, array(Post::meta()->idname => $post_id));
+
+        /**
+         * 当使用不同的查询条件查询同一个对象时，可能进行多次存储查询。但除了对该对象的第一次查询，
+         * 后续的查询结果都会被直接丢弃，仍然返回先前查询所获得的对象实例。
+         */
+        $post4 = Repo::find_one($class, 'post_id > 1 AND post_id < 3');
+
+        // 四次 find_one() 调用返回同一个对象实例
+        $is_equals = (($post === $post2) && ($post2 === $post3) && ($post3 === $post4));
+        // #END EXAMPLE
+        $this->assertTrue($is_equals);
+
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 清除 Repo 的对象缓存
+         *
+         * 如果有必要，可以通过 Repo::clean_cache() 方法清除 Repo 的对象缓存。
+         * 清除缓存后，对同一对象的查询将返回不同的实例。
+         */
+        $post3 = Repo::find_one($class, 3);
+        Repo::clean_cache();
+        $another_post3 = Repo::find_one($class, 3);
+        $is_not_equals = ($post3 !== $another_post3);
+        // #END EXAMPLE
+        $this->assertTrue($is_not_equals);
+
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 清除指定对象的缓存
+         *
+         * 调用 clean_cache() 时如果使用对象主键值作为参数，则只清除该对象的缓存，不影响缓存中的其他对象。
+         */
+        $post2 = Repo::find_one($class, 2);
+        $post4 = Repo::find_one($class, 4);
+        Repo::clean_cache($post->my_meta()->class, $post4->id());
+        $another_post2 = Repo::find_one($class, 2);
+        $another_post4 = Repo::find_one($class, 4);
+        $is_equals = ($post2 === $another_post2);
+        $is_not_equals = ($post4 !== $another_post4);
+        // #END EXAMPLE
+        $this->assertTrue($is_equals);
+        $this->assertTrue($is_not_equals);
     }
 
+    /**
+     * 查询多个对象
+     *
+     * @api Repo::find_multi()
+     */
     function test_find_multi()
     {
+        $post_class = 'tests\\qeephp\\fixture\\models\\Post';
+        $rev_class = 'tests\\qeephp\\fixture\\models\\Revision';
+        $revisions_recordset = $this->_create_revisions();
+        $rev_id_list = array();
+        foreach ($revisions_recordset as $rev)
+        {
+            $rev_id_list[] = array('post_id' => 1, 'rev_id' => $rev['rev_id']);
+        }
+
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 查询指定主键值的多个对象
+         *
+         * 对于只有一个主键的对象，可以将主键值放入数组进行查询。
+         */
         $post_id_list = array(1, 3, 5);
-        $class = 'tests\\qeephp\\fixture\\models\\Post';
-        $posts = Repo::find_multi($class, $post_id_list);
+        $posts = Repo::find_multi($post_class, $post_id_list);
+
+        // 如果查询的属性不是主键，则必须在查询条件中指定属性名称
+        $post_title_list = array(
+            'title' => 'post 1',
+            'title' => 'post 3',
+            'title' => 'post 5',
+        );
+        $posts2 = Repo::find_multi($post_class, $post_title_list);
+
+        /**
+         *  如果要用多个属性做查询条件，则 $cond 参数必须是二维数组
+         *
+         * $rev_id_list = array(
+         *     array('post_id' => $post_id, 'rev_id' => $rev_id),
+         *     ...
+         * );
+         */
+        $revsions = Repo::find_multi($rev_class, $rev_id_list);
+        // #END EXAMPLE
+
         $this->assertEquals(3, count($posts));
         $id = 1;
         foreach ($posts as $post_id => $post)
@@ -85,32 +222,80 @@ class RepoTest extends TestCase
             $this->assertEquals($id, $post_id);
             $id += 2;
         }
+        $this->assertEquals($posts, $posts2);
+    }
+
+    /**
+     * 按照任意条件查询对象
+     *
+     * @api Repo::find()
+     */
+    function test_find()
+    {
+        $post_class = 'tests\\qeephp\\fixture\\models\\Post';
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * find() 方法的 $cond 参数和 IAdapter::find() 方法相同，可以使用各种类型的查询条件。
+         */
+        $posts = Post::find(array('post_id > ? AND post_id < ?', 1, 5))->fetch_all();
+        // #END EXAMPLE
+
+        $this->assertType('array', $posts);
+        foreach($posts as $post)
+        {
+            $this->assertType($post_class, $post);
+            $this->_check_post($post, $post->id());
+        }
     }
 
     function test_create()
     {
+        $post_id = 99;
         $post = new Post();
-        $post->postId = 99;
+        $post->postId = $post_id;
         $post->title  = 'post 99';
         $post->author = 'author 99';
         $post->click_count = 99;
 
-        Repo::save($post);
+        $result = Repo::save($post);
+        $this->assertEquals($post_id, $result);
         $record = $this->_get_post_record(99);
         $this->assertType('array', $record);
         $this->assertEquals(99, $record['post_id']);
         $this->assertEquals('post 99', $record['title']);
         $this->assertEquals('author 99', $record['author']);
         $this->assertEquals(99, $record['click_count']);
+
+        $comment = new Comment();
+        $comment->post_id = $post_id;
+        $comment->created = time();
+        $comment->author  = 'dualface';
+        $comment->body    = 'new comment';
+        $result = Repo::save($comment);
+        $this->assertType('int', $result);
+        $this->assertEquals($result, $comment->id());
+        $this->assertEquals($result, $comment->comment_id);
     }
 
     function test_simple_update()
     {
+        $comment = new Comment();
+        $comment->post_id = 1;
+        $comment->created = time();
+        $comment->author  = 'dualface';
+        $comment->body    = 'new comment';
+        Repo::save($comment);
+        Repo::clean_cache();
+
+        $class = 'tests\\qeephp\\fixture\\models\\Comment';
+        $comment2 = Repo::find_one($class, array('post_id' => 1, 'comment_id' => $comment->id()));
 
     }
 
     function test_update_changed_props()
     {
+        $this->markTestIncomplete();
     }
 
     function test_update_prop_by_arithmetic()
@@ -156,13 +341,7 @@ class RepoTest extends TestCase
 
         $this->_default_adapter = Repo::select_adapter(StorageFixture::DEFAULT_NODE);
         $this->_default_adapter->set_logger(Logger::instance('test'));
-        $meta = Post::meta();
-
-        $this->_recordset = StorageFixture::post_recordset();
-        foreach ($this->_recordset as $record)
-        {
-            $this->_default_adapter->insert($meta->collection, $record);
-        }
+        $this->_create_posts();
     }
 
     protected function teardown()
@@ -173,10 +352,37 @@ class RepoTest extends TestCase
     private function _cleanup()
     {
         $adapter = Repo::select_adapter(Post::meta()->domain());
-        $adapter->execute('DELETE FROM post');
+        $adapter->del('post', null);
+        $adapter->del('comment', null);
         $this->_default_adapter = null;
         $this->_recordset = null;
         Repo::clean_cache();
+    }
+
+    private function _create_recordset($collection, array $recordset, $idname = null)
+    {
+        foreach ($recordset as $offset => $record)
+        {
+            $result = $this->_default_adapter->insert($collection, $record);
+            if ($idname)
+            {
+                $recordset[$offset][$idname] = $result;
+            }
+        }
+        return $recordset;
+    }
+
+    private function _create_posts()
+    {
+        $this->_recordset = StorageFixture::post_recordset();
+        $this->_create_recordset(Post::meta()->collection, $this->_recordset);
+    }
+
+    private function _create_revisions()
+    {
+        $recordset = StorageFixture::revisions_recordset();
+        $meta = Revision::meta();
+        return $this->_create_recordset($meta->collection, $recordset, $meta->autoincr_idname);
     }
 
     private function _check_post($post, $post_id)
