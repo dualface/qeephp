@@ -2,6 +2,8 @@
 
 namespace qeephp\storage\adapter;
 
+use qeephp\storage\Meta;
+
 class MySQLFinder implements IAdapterFinder
 {
     private $_adapter;
@@ -154,7 +156,7 @@ class MySQLFinder implements IAdapterFinder
     {
         if (!$this->_class) return $record;
         $model = new $this->_class();
-        $model->__read($record);
+        $model->__read(Meta::instance($this->_class)->fields_to_props($record));
         return $model;
     }
 }
