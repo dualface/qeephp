@@ -214,6 +214,8 @@ class RepoTest extends TestCase
          * #BEGIN EXAMPLE
          *
          * find() 方法的 $cond 参数和 IAdapter::find() 方法相同，可以使用各种类型的查询条件。
+         *
+         * 注意: find() 方法不会缓存查询得到的对象。
          */
         $posts = Post::find(array('post_id > ? AND post_id < ?', 1, 5))->fetch_all();
         // #END EXAMPLE
@@ -226,17 +228,32 @@ class RepoTest extends TestCase
         }
     }
 
+    /**
+     * 在存储中创建对象
+     *
+     * @api Repo::save();
+     * @api Repo::create()
+     */
     function test_create()
     {
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 保存新创建的对象
+         *
+         * 使用 new 构造的对象实例，在调用 Repo::save() 保存时会自动调用 Repo::create() 方法。
+         *
+         * 在创建新对象时，create() 和 save() 方法会返回新对象的主键值。
+         */
         $post_id = 99;
         $post = new Post();
         $post->postId = $post_id;
         $post->title  = 'post 99';
         $post->author = 'author 99';
         $post->click_count = 99;
-
-        $result = Repo::save($post);
-        $this->assertEquals($post_id, $result);
+        $id = Repo::save($post);
+        // # END EXAMPLE
+        $this->assertEquals($post_id, $id);
         $record = $this->_get_post_record(99);
         $this->assertType('array', $record);
         $this->assertEquals(99, $record['post_id']);
@@ -244,15 +261,49 @@ class RepoTest extends TestCase
         $this->assertEquals('author 99', $record['author']);
         $this->assertEquals(99, $record['click_count']);
 
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 在创建对象时使用自增字段
+         *
+         * 如果对象的存储（例如 MySQL）使用了自增字段，那么在调用 save() 前不用为该字段对应的属性指定值。
+         * save() 成功保存对象后，会确保对象的 id() 方法返回为该对象自动分配的主键值。
+         */
         $comment = new Comment();
         $comment->post_id = $post_id;
         $comment->created = time();
         $comment->author  = 'dualface';
         $comment->body    = 'new comment';
-        $result = Repo::save($comment);
-        $this->assertType('int', $result);
-        $this->assertEquals($result, $comment->id());
-        $this->assertEquals($result, $comment->comment_id);
+        $id = Repo::save($comment);
+        // #END EXAMPLE
+        $this->assertType('int', $id);
+        $this->assertEquals($id, $comment->id());
+        $this->assertEquals($id, $comment->comment_id);
+
+
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 在创建对象时使用复合主键
+         *
+         * 如果使用了复合主键，则需要提供所有主键值。但如果某个主键是自增字段，则可以不提供该主键的值。
+         *
+         * 使用复合主键时，create() 和 save() 方法返回包含所有主键值的数组。
+         */
+        // Revision 对象的 rev_id 主键是自增资段，而 post_id 则是非自增主键。
+        $rev = new Revision();
+        $rev->postId  = 1;
+        $rev->created = time();
+        $rev->body    = 'post 1 rev';
+        $id = Repo::save($rev);
+        // #END EXAMPLE
+        $this->assertType('array', $id);
+        $this->assertArrayHasKey('rev_id', $id);
+        $this->assertArrayHasKey('postId', $id);
+        $obj_id = $rev->id();
+        ksort($obj_id, SORT_ASC);
+        ksort($id, SORT_ASC);
+        $this->assertEquals($obj_id, $id);
     }
 
     function test_simple_update()
