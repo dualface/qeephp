@@ -74,6 +74,8 @@ interface IAdapter
      *
      * @param BaseModel $model
      * @param Meta $meta
+     *
+     * @return bool
      */
     function update_model(BaseModel $model, Meta $meta);
 
