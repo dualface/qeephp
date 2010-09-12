@@ -18,12 +18,6 @@ class RepoTest extends TestCase
     private $_default_adapter;
     private $_recordset;
 
-    /**
-     * 根据模型定义的存储域选择存储适配器
-     *
-     * @api Repo::set_dispatcher()
-     * @api Repo::select_adapter()
-     */
     function test_select_adapter()
     {
         $domain = StorageFixture::DEFAULT_DOMAIN;
@@ -31,6 +25,11 @@ class RepoTest extends TestCase
 
         /**
          * #BEGIN EXAMPLE
+         *
+         * 根据模型定义的存储域选择存储适配器
+         *
+         * @api Repo::set_dispatcher()
+         * @api Repo::select_adapter()
          *
          * 设定指定存储域的调度方法，并通过 select_adapter() 在运行时选择实际的存储适配器对象。
          *
@@ -72,12 +71,6 @@ class RepoTest extends TestCase
         $this->assertFalse($adapter === $adapter_second);
     }
 
-    /**
-     * 查询一个对象
-     *
-     * @api Repo::find_one()
-     * @api Repo::clean_cache();
-     */
     function test_find_one()
     {
         $class = 'tests\\qeephp\\fixture\\models\\Post';
@@ -87,23 +80,30 @@ class RepoTest extends TestCase
          *
          * 查询指定主键值的对象
          *
+         * @api Repo::find_one()
+         * @api BaseModel::find_one()
+         *
          * 如果 find_one() 的第二个参数是整数，则暗示以该值为主键值进行查询。
+         *
+         * 提示：BaseModel::find_one() 调用 Repo::find_one() 进行查询操作。
          */
-        $post_id = 5;
-        $post = Repo::find_one($class, $post_id);
+        $post = Post::find_one(5);
         // #END EXAMPLE
-        $this->_check_post($post, $post_id);
+        $this->_check_post($post, 5);
 
         /**
          * #BEGIN EXAMPLE
          *
          * 使用更复杂的条件查询对象
          *
+         * @api Repo::find_one()
+         * @api BaseModel::find_one()
+         *
          * find_one() 方法和其他对象的 find_one() 方法一样支持多样化的查询条件。
          * 参考 MySQLAdapter::find_one()。
          */
         $cond = array('post_id > ? AND post_id < ?', 3, 5);
-        $post = Repo::find_one($class, $cond);
+        $post = Post::find_one($cond);
         // #END EXAMPLE
         $this->_check_post($post, 4);
 
@@ -111,6 +111,9 @@ class RepoTest extends TestCase
          * #BEGIN EXAMPLE
          *
          * Repo 的对象缓存
+         *
+         * @api Repo::find_one()
+         * @api BaseModel::find_one()
          *
          * 在当前请求执行过程中，曾经查询过的对象都会记录在 Repo 的对象缓存中，
          * 因此对同一个对象的重复查询不会返回对象的多个实例。
@@ -120,18 +123,20 @@ class RepoTest extends TestCase
          */
         $post_id = 2;
         // 以下三次 find_one() 调用仅会进行一次存储查询操作
-        $post = Repo::find_one($class, $post_id);
-        $post2 = Repo::find_one($class, $post_id);
-        $post3 = Repo::find_one($class, array(Post::meta()->idname => $post_id));
+        $post_query1 = Post::find_one($post_id);
+        $post_query2 = Post::find_one($post_id);
+        $post_query3 = Post::find_one(array(Post::meta()->idname => $post_id));
 
         /**
          * 当使用不同的查询条件查询同一个对象时，可能进行多次存储查询。但除了对该对象的第一次查询，
          * 后续的查询结果都会被直接丢弃，仍然返回先前查询所获得的对象实例。
          */
-        $post4 = Repo::find_one($class, 'post_id > 1 AND post_id < 3');
+        $post_query4 = Post::find_one('post_id > 1 AND post_id < 3');
 
         // 四次 find_one() 调用返回同一个对象实例
-        $is_equals = (($post === $post2) && ($post2 === $post3) && ($post3 === $post4));
+        $is_equals = (($post_query1 === $post_query2)
+                     && ($post_query2 === $post_query3)
+                     && ($post_query3 === $post_query4));
         // #END EXAMPLE
         $this->assertTrue($is_equals);
 
@@ -140,12 +145,16 @@ class RepoTest extends TestCase
          *
          * 清除 Repo 的对象缓存
          *
+         * @api Repo::find_one()
+         * @api Repo::clean_cache();
+         * @api BaseModel::find_one()
+         *
          * 如果有必要，可以通过 Repo::clean_cache() 方法清除 Repo 的对象缓存。
-         * 清除缓存后，对同一对象的查询将返回不同的实例。
+         * 清除缓存后，对所有对象的查询将返回不同的实例。
          */
-        $post3 = Repo::find_one($class, 3);
+        $post3 = Post::find_one(3);
         Repo::clean_cache();
-        $another_post3 = Repo::find_one($class, 3);
+        $another_post3 = Post::find_one(3);
         $is_not_equals = ($post3 !== $another_post3);
         // #END EXAMPLE
         $this->assertTrue($is_not_equals);
@@ -155,13 +164,21 @@ class RepoTest extends TestCase
          *
          * 清除指定对象的缓存
          *
-         * 调用 clean_cache() 时如果使用对象主键值作为参数，则只清除该对象的缓存，不影响缓存中的其他对象。
+         * @api Repo::find_one()
+         * @api Repo::clean_cache();
+         * @api BaseModel::find_one()
+         * @api BaseModel::clear_cache()
+         *
+         * 调用对象的 clean_cache() 方法，可以清除掉该对象在 Repo 中的缓存。
+         * 清除缓存后，对同一对象的查询将返回不同的实例。
+         *
+         * 提示：BaseModel::clean_cache() 调用 Repo::clean_cache() 清除指定对象的缓存。
          */
-        $post2 = Repo::find_one($class, 2);
-        $post4 = Repo::find_one($class, 4);
-        Repo::clean_cache($post->my_meta()->class, $post4->id());
-        $another_post2 = Repo::find_one($class, 2);
-        $another_post4 = Repo::find_one($class, 4);
+        $post2 = Post::find_one(2);
+        $post4 = Post::find_one(4);
+        $post4->clean_cache();
+        $another_post2 = Post::find_one(2);
+        $another_post4 = Post::find_one(4);
         $is_equals = ($post2 === $another_post2);
         $is_not_equals = ($post4 !== $another_post4);
         // #END EXAMPLE
@@ -169,11 +186,6 @@ class RepoTest extends TestCase
         $this->assertTrue($is_not_equals);
     }
 
-    /**
-     * 查询指定主键值的多个对象
-     *
-     * @api Repo::find_multi()
-     */
     function test_find_multi()
     {
         $post_class = 'tests\\qeephp\\fixture\\models\\Post';
@@ -183,13 +195,18 @@ class RepoTest extends TestCase
          *
          * 查询指定主键值的多个对象
          *
+         * @api Repo::find_multi()
+         * @api BaseModel::find_multi()
+         *
          * find_multi() 只支持使用一个主键的对象。$cond 只能是包含多个主键值的数组。
          *
          * 与 find_one() 一样，find_multi() 会缓存查询到的对象，并尽可能减少不必要的存储查询操作。
+         *
+         * 提示：BaseModel::find_multi() 调用 Repo::find_multi() 进行查询操作。
          */
         $post_id_list = array(1, 3, 5);
-        $posts = Repo::find_multi($post_class, $post_id_list);
-        $other_posts = Repo::find_multi($post_class, $post_id_list);
+        $posts = Post::find_multi($post_id_list);
+        $other_posts = Post::find_multi($post_id_list);
         // #END EXAMPLE
         $this->assertEquals(3, count($posts));
         $id = 1;
@@ -202,18 +219,20 @@ class RepoTest extends TestCase
         }
     }
 
-    /**
-     * 按照任意条件查询对象
-     *
-     * @api Repo::find()
-     */
     function test_find()
     {
         $post_class = 'tests\\qeephp\\fixture\\models\\Post';
         /**
          * #BEGIN EXAMPLE
+         * 
+         * 按照任意条件查询对象
+         *
+         * @api Repo::find()
+         * @api BaseModel::find()
          *
          * find() 方法的 $cond 参数和 IAdapter::find() 方法相同，可以使用各种类型的查询条件。
+         *
+         * 提示：BaseModel::find() 调用 Repo::find() 进行查询操作。
          *
          * 注意: find() 方法不会缓存查询得到的对象。
          */
@@ -228,12 +247,6 @@ class RepoTest extends TestCase
         }
     }
 
-    /**
-     * 在存储中创建对象
-     *
-     * @api Repo::save();
-     * @api Repo::create()
-     */
     function test_create()
     {
         /**
@@ -241,9 +254,15 @@ class RepoTest extends TestCase
          *
          * 保存新创建的对象
          *
+         * @api Repo::save();
+         * @api Repo::create()
+         * @api BaseModel::save()
+         *
          * 使用 new 构造的对象实例，在调用 Repo::save() 保存时会自动调用 Repo::create() 方法。
          *
          * 在创建新对象时，create() 和 save() 方法会返回新对象的主键值。
+         *
+         * 提示：BaseModel::save() 调用 Repo::save() 进行对象的存储操作。
          */
         $post_id = 99;
         $post = new Post();
@@ -251,7 +270,7 @@ class RepoTest extends TestCase
         $post->title  = 'post 99';
         $post->author = 'author 99';
         $post->click_count = 99;
-        $id = Repo::save($post);
+        $id = $post->save();
         // # END EXAMPLE
         $this->assertEquals($post_id, $id);
         $record = $this->_get_post_record(99);
@@ -266,6 +285,10 @@ class RepoTest extends TestCase
          *
          * 在创建对象时使用自增字段
          *
+         * @api Repo::save();
+         * @api Repo::create()
+         * @api BaseModel::save()
+         *
          * 如果对象的存储（例如 MySQL）使用了自增字段，那么在调用 save() 前不用为该字段对应的属性指定值。
          * save() 成功保存对象后，会确保对象的 id() 方法返回为该对象自动分配的主键值。
          */
@@ -274,7 +297,7 @@ class RepoTest extends TestCase
         $comment->created = time();
         $comment->author  = 'dualface';
         $comment->body    = 'new comment';
-        $id = Repo::save($comment);
+        $id = $comment->save();
         // #END EXAMPLE
         $this->assertType('int', $id);
         $this->assertEquals($id, $comment->id());
@@ -286,6 +309,10 @@ class RepoTest extends TestCase
          *
          * 在创建对象时使用复合主键
          *
+         * @api Repo::save();
+         * @api Repo::create()
+         * @api BaseModel::save()
+         *
          * 如果使用了复合主键，则需要提供所有主键值。但如果某个主键是自增字段，则可以不提供该主键的值。
          *
          * 使用复合主键时，create() 和 save() 方法返回包含所有主键值的数组。
@@ -295,7 +322,7 @@ class RepoTest extends TestCase
         $rev->postId  = 1;
         $rev->created = time();
         $rev->body    = 'post 1 rev';
-        $id = Repo::save($rev);
+        $id = $rev->save();
         // #END EXAMPLE
         $this->assertType('array', $id);
         $this->assertArrayHasKey('rev_id', $id);
@@ -308,17 +335,31 @@ class RepoTest extends TestCase
 
     function test_simple_update()
     {
-        $comment = new Comment();
-        $comment->post_id = 1;
-        $comment->created = time();
-        $comment->author  = 'dualface';
-        $comment->body    = 'new comment';
-        Repo::save($comment);
-        Repo::clean_cache();
-
-        $class = 'tests\\qeephp\\fixture\\models\\Comment';
-        $comment2 = Repo::find_one($class, array('post_id' => 1, 'comment_id' => $comment->id()));
-
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 保存对象的改动
+         *
+         * @api Repo::save()
+         * @api Repo::update()
+         * @api BaseModel::save()
+         *
+         * 使用 find* 方法读取出来的对象，调用 Repo::save() 可将对象的改动保存起来。
+         * 
+         * 如果确实更新了存储的数据，则 save() 方法返回 true，否则返回 false。
+         *
+         * 提示：BaseModel::save() 调用 Repo::save() 进行对象的存储操作。
+         */
+        $post = Post::find_one(1);
+        $post->title = strrev($post->title);
+        $success = $post->save();
+        // #END EXAMPLE
+        $this->assertTrue($success);
+        $post->clean_cache();
+        $another_post = Post::find_one(1);
+        $this->assertFalse($post === $another_post);
+        $this->assertEquals($post->title,  $another_post->title);
+        $this->assertEquals($post->postId, $another_post->postId);
     }
 
     function test_update_changed_props()
@@ -328,21 +369,25 @@ class RepoTest extends TestCase
 
     function test_update_prop_by_arithmetic()
     {
+        /**
+         * #BEGIN EXAMPLE
+         *
+         */
         $post_id = 1;
-        $class = 'tests\\qeephp\\fixture\\models\\Post';
-        $post = Repo::find_one($class, array('postId' => $post_id));
+        $post = Post::find_one($post_id);
+        $post->clean_cache();
         $post->click_count += 100;
         $post->title = strrev($post->title);
 
-        Repo::clean_cache();
-        $post2 = Repo::find_one($class, array('postId' => $post_id));
+        $post2 = Post::find_one($post_id);
         $post2->click_count += 100;
 
-        $result = Repo::save($post);
-        $result2 = Repo::save($post2);
+        $result = $post->save();
+        $result2 = $post2->save();
+        // #END EXAMPLE
 
-        $this->assertEquals(1, $result);
-        $this->assertEquals(1, $result2);
+        $this->assertTrue($result);
+        $this->assertTrue($result2);
 
         $record = $this->_get_post_record($post_id);
         $this->assertType('array', $record);

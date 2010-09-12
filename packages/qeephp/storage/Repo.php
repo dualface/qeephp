@@ -129,7 +129,9 @@ abstract class Repo implements IStorageDefine
     }
 
     /**
-     * 查找多个对象
+     * 按照主键值查询多个模型实例
+     *
+     * 仅能用于单主键的对象，$cond 参数为包含多个主键值的数组。
      *
      * @param string $class
      * @param array $cond
