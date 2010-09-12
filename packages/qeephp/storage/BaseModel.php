@@ -168,7 +168,21 @@ abstract class BaseModel implements IStorageDefine
      */
     static function find_one($cond)
     {
-        return Repo::find_one(get_called_class(), func_get_args());
+        return Repo::find_one(get_called_class(), $cond);
+    }
+
+    /**
+     * 按照主键值查询多个模型实例
+     *
+     * 仅能用于单主键的对象，$cond 参数为包含多个主键值的数组。
+     *
+     * @param array $cond
+     *
+     * @return array
+     */
+    static function find_multi(array $cond)
+    {
+        return Repo::find_multi(get_called_class(), $cond);
     }
 
     /**
@@ -213,6 +227,18 @@ abstract class BaseModel implements IStorageDefine
     static function del_by($cond)
     {
         return Repo::del_by(get_called_class(), func_get_args());
+    }
+
+    /**
+     * 清除对象的缓存
+     */
+    function clean_cache()
+    {
+        if ($this->is_new())
+        {
+            throw StorageError::entity_not_saved_error(get_class($this), $this->id());
+        }
+        Repo::clean_cache(get_class($this), $this->id());
     }
 
     /**
