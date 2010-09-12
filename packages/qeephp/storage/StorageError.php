@@ -15,6 +15,7 @@ class StorageError extends BaseError
     const INVALID_CONFIG            = 102;
     const INCOMPLETE_MODEL_PROP     = 103;
     const UNKNOWN_MODEL_PROP        = 104;
+    const ENTITY_NOT_SAVED          = 105;
 
     static function not_set_id_error($class_name)
     {
@@ -39,6 +40,12 @@ class StorageError extends BaseError
     static function unknown_model_prop_error($class_name, $prop)
     {
         return new StorageError("UNKNOWN_MODEL_PROP: {$class_name}, {$prop}", self::UNKNOWN_MODEL_PROP);
+    }
+
+    static function entity_not_saved_error($class_name, $id)
+    {
+        if (is_array($id)) $id = http_build_query ($id);
+        return new StorageError("ENTITY_NOT_SAVED: {$class_name}, {$id}");
     }
 
     static function not_set_domain_config_error($domain)
