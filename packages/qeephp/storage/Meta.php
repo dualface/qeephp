@@ -96,20 +96,6 @@ class Meta implements IStorageDefine
     public $class;
 
     /**
-     * 存储域的名称
-     *
-     * @var string
-     */
-    public $domain;
-
-    /**
-     * 存储集合的名称
-     *
-     * @var string
-     */
-    public $collection;
-
-    /**
      * 主键名
      *
      * @var string|array
@@ -271,6 +257,20 @@ class Meta implements IStorageDefine
     public $events_listener = array();
 
     /**
+     * 存储域的名称
+     *
+     * @var string
+     */
+    private $_domain;
+
+    /**
+     * 存储集合的名称
+     *
+     * @var string
+     */
+    private $_collection;
+
+    /**
      * 已经实例化的 Meta 对象
      *
      * @var array
@@ -299,7 +299,7 @@ class Meta implements IStorageDefine
     {
         if (!isset(self::$_meta_instances[$class]))
         {
-            $cache = function_exists('apc_fetch');
+            $cache = Config::get('storage.meta_cache', false) && function_exists('apc_fetch');
             $cache_key = "meta.instances.{$class}";
             $meta = null;
             /* @var $meta Meta */
@@ -325,9 +325,19 @@ class Meta implements IStorageDefine
      */
     function domain()
     {
-        return !empty($this->domain)
-               ? $this->domain
+        return !empty($this->_domain)
+               ? $this->_domain
                : Config::get('storage.default_domain', 'default');
+    }
+
+    /**
+     * 返回存储集合的名称
+     *
+     * @return string
+     */
+    function collection()
+    {
+        return $this->_collection;
     }
 
     /**
@@ -506,10 +516,12 @@ class Meta implements IStorageDefine
      */
     private function _init()
     {
+        static $internals = array('domain' => '_domain', 'collection' => '_collection');
         $class = $this->class;
         $data = Inspector::inspect($class);
         foreach ($data as $key => $value)
         {
+            if (isset($internals[$key])) $key = $internals[$key];
             $this->$key = $value;
         }
         $this->use_extends = (!empty($this->extends));
