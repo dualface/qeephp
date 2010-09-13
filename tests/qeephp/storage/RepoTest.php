@@ -448,14 +448,14 @@ class RepoTest extends TestCase
     private function _create_posts()
     {
         $this->_recordset = StorageFixture::post_recordset();
-        $this->_create_recordset(Post::meta()->collection, $this->_recordset);
+        $this->_create_recordset(Post::meta()->collection(), $this->_recordset);
     }
 
     private function _create_revisions()
     {
         $recordset = StorageFixture::revisions_recordset();
         $meta = Revision::meta();
-        return $this->_create_recordset($meta->collection, $recordset, $meta->autoincr_idname);
+        return $this->_create_recordset($meta->collection(), $recordset, $meta->autoincr_idname);
     }
 
     private function _check_post($post, $post_id)
@@ -474,7 +474,7 @@ class RepoTest extends TestCase
     {
         $meta = Post::meta();
         $cond = array($meta->props_to_fields[$meta->idname] => $post_id);
-        return $this->_default_adapter->find_one($meta->collection, $cond);
+        return $this->_default_adapter->find_one($meta->collection(), $cond);
     }
 }
 

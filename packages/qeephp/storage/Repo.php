@@ -94,7 +94,7 @@ abstract class Repo implements IStorageDefine
         {
             $adapter = self::select_adapter($meta->domain());
             /* @var $adapter IAdapter */
-            $record = $adapter->find_one($meta->collection, $cond, null, $meta->props_to_fields);
+            $record = $adapter->find_one($meta->collection(), $cond, null, $meta->props_to_fields);
         }
         if (!is_array($record))
         {
@@ -175,7 +175,7 @@ abstract class Repo implements IStorageDefine
         {
             $idfield = $meta->props_to_fields[$meta->idname];
             $adapter = self::select_adapter($meta->domain());
-            $finder  = $adapter->find($meta->collection, array($idfield => array($not_founds)));
+            $finder  = $adapter->find($meta->collection(), array($idfield => array($not_founds)));
             $finder->each(function ($record) use (& $records, $idfield) {
                 $records[$record[$idfield]] = $record;
             });
@@ -214,7 +214,7 @@ abstract class Repo implements IStorageDefine
     {
         $meta = Meta::instance($class);
         $adapter = self::select_adapter($meta->domain(), $cond);
-        $finder = $adapter->find($meta->collection, $cond, null, $meta->props_to_fields);
+        $finder = $adapter->find($meta->collection(), $cond, null, $meta->props_to_fields);
         $finder->set_model_class($class);
         return $finder;
     }
@@ -250,7 +250,7 @@ abstract class Repo implements IStorageDefine
         $meta->raise_event(self::BEFORE_CREATE_EVENT, null, $model);
         $record = $meta->props_to_fields($model->__to_array());
         $adapter = self::select_adapter($meta->domain(), $model);
-        $id = $adapter->insert($meta->collection, $record);
+        $id = $adapter->insert($meta->collection(), $record);
         $model->__save(true, $id);
         $meta->raise_event(self::AFTER_CREATE_EVENT, array($id), $model);
         return $model->id();
@@ -291,9 +291,9 @@ abstract class Repo implements IStorageDefine
         $primaryKey = $this->idname;
         $primaryKeyValue = $model->$primaryKey;
 
-        $result = $this->adapter()->del($this->collection,
-                                         $this->props_to_fields[$primaryKey],
-                                         $primaryKeyValue);
+        $result = $this->adapter()->del($this->collection(),
+                                        $this->props_to_fields[$primaryKey],
+                                        $primaryKeyValue);
 
         $this->raise_event(self::AFTER_DEL_EVENT, array($model, $result));
         $model->__afterDel($result);
@@ -312,9 +312,9 @@ abstract class Repo implements IStorageDefine
     {
         $event = call_user_func(array($this->class, '__beforeErase'), $primaryKeyValue);
         $this->raise_event(self::BEFORE_ERASE_EVENT, array($primaryKeyValue), $event);
-        $result = $this->adapter()->del($this->collection,
-                                         $this->props_to_fields[$this->idname],
-                                         $primaryKeyValue);
+        $result = $this->adapter()->del($this->collection(),
+                                        $this->props_to_fields[$this->idname],
+                                        $primaryKeyValue);
         $this->raise_event(self::AFTER_ERASE_EVENT, array($primaryKeyValue, $result));
         call_user_func(array($this->class, '__afterErase'), $primaryKeyValue, $result);
         return $result;

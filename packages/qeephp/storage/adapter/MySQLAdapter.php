@@ -277,7 +277,10 @@ class MySQLAdapter implements IAdapter, IStorageDefine
             }
         }
 
-        $result = $this->update($meta->collection, $update_cond, $changes, $meta->props_to_fields);
+        $result = $this->update($meta->collection(),
+                                $update_cond,
+                                $changes,
+                                $meta->props_to_fields);
         return $result > 0;
     }
 

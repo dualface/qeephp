@@ -54,7 +54,7 @@ class MetaTest extends TestCase
         // class: @domain, @collection, @update, @readonly
         $meta = new Meta('tests\\qeephp\\fixture\\models\\Post');
         $this->assertEquals(Post::TEST_DOMAIN, $meta->domain());
-        $this->assertEquals(Post::TEST_COLLECTION, $meta->collection);
+        $this->assertEquals(Post::TEST_COLLECTION, $meta->collection());
         $this->assertEquals(Post::TEST_UPDATE, $meta->update);
         $this->assertEquals(Post::TEST_READONLY, $meta->readonly);
         $this->assertEquals(Post::TEST_IDNAME, $meta->idname);
@@ -89,7 +89,7 @@ class MetaTest extends TestCase
 
         // class
         $meta = new Meta('tests\\qeephp\\fixture\\models\\Comment');
-        $this->assertEquals(Comment::TEST_COLLECTION,   $meta->collection);
+        $this->assertEquals(Comment::TEST_COLLECTION,   $meta->collection());
         $this->assertEquals(Comment::TEST_UPDATE,       $meta->update);
         $this->assertEquals(Comment::TEST_READONLY,     $meta->readonly);
         $this->assertEquals(Comment::TEST_IDNAME,       $meta->idname);
