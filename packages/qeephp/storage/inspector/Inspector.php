@@ -17,7 +17,7 @@ abstract class Inspector implements IStorageDefine
         'idname'            => null,
         'autoincr_idname'   => null,
         'composite_id'      => false,
-        'update'            => 'changed',
+        'update'            => 'all, check_all',
         'extends'           => null,
         'readonly'          => false,
         'nonp'              => false,
@@ -276,7 +276,7 @@ abstract class Inspector implements IStorageDefine
 
     private static function _finalize_class_data($class, array & $data)
     {
-        $values = arr(strtolower($data['update']), '|');
+        $values = arr(strtolower($data['update']), ',');
         $data['update'] = 0;
         foreach ($values as $value)
         {

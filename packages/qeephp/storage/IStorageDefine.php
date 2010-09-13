@@ -43,7 +43,7 @@ interface IStorageDefine
      *    -  更新时不检查
      *
      * 在模型类中使用 @update 指定更新策略，默认设置为：
-     * @update changed
+     * @update all & check_all
      *
      * 使用 UPDATE_CHECK_ALL 和 UPDATE_CHECK_CHANGED 类似于乐观锁，可以避免并发更新冲突时。
      * 针对特定属性可以指定 UPDATE_PROP_*，进一步减少并发冲突。
@@ -53,7 +53,7 @@ interface IStorageDefine
     const UPDATE_CHECK_ALL      = 0x0004;
     const UPDATE_CHECK_CHANGED  = 0x0008;
     const UPDATE_CHECK_NON      = 0x0000;
-    const UPDATE_DEFAULT_POLICY = 0x0002;
+    const UPDATE_DEFAULT_POLICY = 0x0005;
 
     /**
      * 对象属性的更新策略

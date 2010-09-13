@@ -21,7 +21,7 @@ use qeephp\storage\inspector\Inspector;
  *
  * -  @update
  *    将更新后的对象保存到存储集合时，应该采用的更新策略，
- *    默认设定为 Meta::UPDATE_CHANGED_PROPS | Meta::UPDATE_CHECK_ALL
+ *    默认设定为 all, check_all
  *
  * -  @extends by: 字段名 classes: 类名称=字段值
  *    定义单表继承，例如 @extends by: cls classes: Guest=0, Member=1, Admin=2
@@ -70,7 +70,7 @@ use qeephp\storage\inspector\Inspector;
  *
  * -  @update
  *    将更新后的对象保存到存储集合时，针对特定属性应该采用的更新策略，
- *    默认设定为 Meta::UPDATE_PROP_OVERWRITE
+ *    默认设定为 overwrite
  */
 class Meta implements IStorageDefine
 {
