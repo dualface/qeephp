@@ -38,7 +38,7 @@ CREATE TABLE `revision` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 $ cd tests
-$ phpunit qeephp
+$ phpunit cases
 
 单元测试产生的日志文件放在 tests/tmp 目录中
 
