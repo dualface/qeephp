@@ -1,6 +1,6 @@
 <?php
 
-namespace tests\qeephp\fixture\models\plugins;
+namespace tests\fixture\models\plugins;
 
 use qeephp\storage\plugins\BasePlugin;
 use qeephp\storage\Meta;

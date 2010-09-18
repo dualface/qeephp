@@ -1,10 +1,10 @@
 <?php
 
-namespace tests\qeephp\fixture\models;
+namespace tests\fixture\models;
 
 use qeephp\storage\Meta;
 use qeephp\storage\BaseModel;
-use tests\qeephp\fixture\StorageFixture;
+use tests\fixture\StorageFixture;
 
 /**
  * @collection post

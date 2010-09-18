@@ -1,8 +1,8 @@
 <?php
 
-namespace tests\qeephp\storage\adapter;
+namespace tests\cases\storage\adapter;
 
-use tests\qeephp\fixture\StorageFixture;
+use tests\fixture\StorageFixture;
 use tests\includes\TestCase;
 
 use qeephp\storage\adapter\MySQLAdapter;

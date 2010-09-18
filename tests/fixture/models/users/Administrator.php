@@ -1,12 +1,12 @@
 <?php
 
-namespace tests\qeephp\fixture\models\users;
+namespace tests\fixture\models\users;
 
 /**
- * @bind class: tests\qeephp\fixture\models\users\AdministratorPlugin
+ * @bind class: tests\fixture\models\users\AdministratorPlugin
  *       arg1: 1
  *
- * @bind class: tests\qeephp\fixture\models\users\EmptyPlugin
+ * @bind class: tests\fixture\models\users\EmptyPlugin
  */
 class Administrator extends BaseUser
 {

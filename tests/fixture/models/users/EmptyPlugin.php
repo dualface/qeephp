@@ -1,6 +1,6 @@
 <?php
 
-namespace tests\qeephp\fixture\models\users;
+namespace tests\fixture\models\users;
 
 use qeephp\storage\Meta;
 use qeephp\storage\plugins\BaseModelPlugin;

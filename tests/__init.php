@@ -6,7 +6,9 @@ use qeephp\Autoload;
 use qeephp\Config;
 use qeephp\tools\ILogger;
 
-define('IN_TEST', true);
+if (defined('IN_QEEPHP_TESTS')) return;
+
+define('IN_QEEPHP_TESTS', true);
 define('ROOT_PATH', dirname(__DIR__));
 define('PACKAGES_PATH', ROOT_PATH . '/packages');
 define('QEEPHP_SRC_PATH', PACKAGES_PATH . '/qeephp');

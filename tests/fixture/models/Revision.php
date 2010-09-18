@@ -1,6 +1,6 @@
 <?php
 
-namespace tests\qeephp\fixture\models;
+namespace tests\fixture\models;
 
 use qeephp\storage\BaseModel;
 

@@ -1,17 +1,17 @@
 <?php
 
-namespace tests\qeephp\storage;
+namespace tests\cases\storage;
 
 use tests\includes\TestCase;
-use tests\qeephp\fixture\ModelTestApp;
-use tests\qeephp\fixture\models\Post;
-use tests\qeephp\fixture\models\Comment;
-use tests\qeephp\fixture\models\Revision;
-use tests\qeephp\fixture\models\LogEntity;
-use tests\qeephp\fixture\models\users\BaseUser;
-use tests\qeephp\fixture\models\users\Guest;
-use tests\qeephp\fixture\models\users\Member;
-use tests\qeephp\fixture\models\users\Administrator;
+use tests\fixture\ModelTestApp;
+use tests\fixture\models\Post;
+use tests\fixture\models\Comment;
+use tests\fixture\models\Revision;
+use tests\fixture\models\LogEntity;
+use tests\fixture\models\users\BaseUser;
+use tests\fixture\models\users\Guest;
+use tests\fixture\models\users\Member;
+use tests\fixture\models\users\Administrator;
 
 use qeephp\storage\IStorageDefine;
 use qeephp\storage\Meta;
@@ -52,7 +52,7 @@ class MetaTest extends TestCase
     function test_inspect_class()
     {
         // class: @domain, @collection, @update, @readonly
-        $meta = new Meta('tests\\qeephp\\fixture\\models\\Post');
+        $meta = new Meta('tests\\fixture\\models\\Post');
         $this->assertEquals(Post::TEST_DOMAIN, $meta->domain());
         $this->assertEquals(Post::TEST_COLLECTION, $meta->collection());
         $this->assertEquals(Post::TEST_UPDATE, $meta->update);
@@ -88,7 +88,7 @@ class MetaTest extends TestCase
         $this->assertEquals(Post::TEST_PROP_CLICK_COUNT_UPDATE, $prop['update']);
 
         // class
-        $meta = new Meta('tests\\qeephp\\fixture\\models\\Comment');
+        $meta = new Meta('tests\\fixture\\models\\Comment');
         $this->assertEquals(Comment::TEST_COLLECTION,   $meta->collection());
         $this->assertEquals(Comment::TEST_UPDATE,       $meta->update);
         $this->assertEquals(Comment::TEST_READONLY,     $meta->readonly);
@@ -115,7 +115,7 @@ class MetaTest extends TestCase
         $this->assertEquals('get_created_string', $prop['getter']);
 
         // class: 复合主键（有一个主键是自增）
-        $meta = new Meta('tests\\qeephp\\fixture\\models\\Revision');
+        $meta = new Meta('tests\\fixture\\models\\Revision');
         $props = array('postId', 'rev_id');
         $this->_check_props($props, $meta);
 
@@ -125,7 +125,7 @@ class MetaTest extends TestCase
         $this->assertTrue($meta->composite_id);
 
         // class: 复合主键（无自增）
-        $meta = new Meta('tests\\qeephp\\fixture\\models\\LogEntity');
+        $meta = new Meta('tests\\fixture\\models\\LogEntity');
         $props = array('log_id', 'user_id');
         $this->_check_props($props, $meta);
 
@@ -136,7 +136,7 @@ class MetaTest extends TestCase
 
     function test_inherited_class()
     {
-        $meta = new Meta('tests\\qeephp\\fixture\\models\\users\\Member');
+        $meta = new Meta('tests\\fixture\\models\\users\\Member');
         $this->assertTrue($meta->use_extends);
         $extends = $meta->extends;
         $this->assertType('array', $extends);
@@ -153,7 +153,7 @@ class MetaTest extends TestCase
 
     function test_bind_plugins()
     {
-        $meta = new Meta('tests\\qeephp\\fixture\\models\\users\\Administrator');
+        $meta = new Meta('tests\\fixture\\models\\users\\Administrator');
         $this->assertArrayHasKey('test_admin_plugin_static_method', $meta->static_methods);
         $this->assertArrayHasKey('test_admin_plugin_dynamic_method', $meta->dynamic_methods);
         $this->assertArrayHasKey('test_empty_plugin_static_method', $meta->static_methods);
@@ -163,7 +163,7 @@ class MetaTest extends TestCase
 
     function test_events()
     {
-        $meta = new Meta('tests\\qeephp\\fixture\\models\\users\\Member');
+        $meta = new Meta('tests\\fixture\\models\\users\\Member');
         $listener = function ($event) {
             $event->completed = true;
             $event->result = 1;

@@ -1,6 +1,6 @@
 <?php
 
-namespace tests\qeephp\fixture;
+namespace tests\fixture;
 
 use \qeephp\mvc\App;
 

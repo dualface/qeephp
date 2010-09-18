@@ -1,6 +1,6 @@
 <?php
 
-namespace tests\qeephp\fixture\models\users;
+namespace tests\fixture\models\users;
 
 class Member extends BaseUser
 {

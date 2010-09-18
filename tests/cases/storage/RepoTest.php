@@ -1,12 +1,12 @@
 <?php
 
-namespace tests\qeephp\storage;
+namespace tests\cases\storage;
 
 use tests\includes\TestCase;
-use tests\qeephp\fixture\StorageFixture;
-use tests\qeephp\fixture\models\Post;
-use tests\qeephp\fixture\models\Comment;
-use tests\qeephp\fixture\models\Revision;
+use tests\fixture\StorageFixture;
+use tests\fixture\models\Post;
+use tests\fixture\models\Comment;
+use tests\fixture\models\Revision;
 
 use qeephp\storage\Repo;
 use qeephp\tools\Logger;
@@ -73,7 +73,7 @@ class RepoTest extends TestCase
 
     function test_find_one()
     {
-        $class = 'tests\\qeephp\\fixture\\models\\Post';
+        $class = 'tests\\fixture\\models\\Post';
 
         /**
          * #BEGIN EXAMPLE
@@ -188,7 +188,7 @@ class RepoTest extends TestCase
 
     function test_find_multi()
     {
-        $post_class = 'tests\\qeephp\\fixture\\models\\Post';
+        $post_class = 'tests\\fixture\\models\\Post';
 
         /**
          * #BEGIN EXAMPLE
@@ -221,7 +221,7 @@ class RepoTest extends TestCase
 
     function test_find()
     {
-        $post_class = 'tests\\qeephp\\fixture\\models\\Post';
+        $post_class = 'tests\\fixture\\models\\Post';
         /**
          * #BEGIN EXAMPLE
          * 
