@@ -8,7 +8,7 @@ use qeephp\storage\BaseModel;
  * @collection comment
  *
  * @readonly
- * @update all | check_changed
+ * @update all, check_changed
  */
 class Comment extends BaseModel
 {

@@ -364,13 +364,85 @@ class RepoTest extends TestCase
 
     function test_update_changed_props()
     {
-        $this->markTestIncomplete();
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 仅保存对象改动过的属性
+         *
+         * @api Repo::save()
+         * @api Repo::update()
+         * @api BaseModel::save()
+         *
+         * 默认情况下，保存改动后的对象到存储时，会保存对象的所有属性，即便只有部分属性发生了改变。
+         * 关于更新策略的详细说明，参考 Meta 类的文档。
+         */
+        // 对同一对象读取两次，模拟并发的请求
+        Repo::clean_cache();
+        $post = Post::find_one(1);
+        $post->clean_cache();
+        $post2 = Post::find_one(1);
+
+        // 分别修改两个实例的不同属性，并保存
+        $post->title = 'new post 1';
+        $post2->author = 'new post 1 author';
+        $post->save();
+        $post2->save();
+
+        // 重新读取对象，可以看到 title 和 author 属性都发生了变化
+        Repo::clean_cache();
+        $post3 = Post::find_one(1);
+        $is_title_euqals = ($post3->title == $post->title);
+        $is_author_equals = ($post3->author == $post2->author);
+        // #END EXAMPLE
+        $this->assertTrue($is_title_euqals);
+        $this->assertTrue($is_author_equals);
+    }
+
+    function test_update_check_changed_props()
+    {
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 更新时检查改动过的属性，避免并发冲突
+         *
+         * @api Repo::save()
+         * @api Repo::update()
+         * @api BaseModel::save()
+         *
+         * 合理设置模型类的 @update 标注，可以一定程度上避免并发更新冲突。
+         *
+         * 例如 Post 类的 @update 设置为 changed, check_changed。
+         * 则在保存改动过的 Post 对象时，仅会保存改动过的属性。
+         * 并对改动改动过的属性进行检查，确保存储中该属性的值没有发生变化。
+         *
+         * 有关 @update 的详细设定，请参考 Meta 文档。
+         */
+        // 对同一对象读取两次，模拟并发的请求
+        Repo::clean_cache();
+        $post = Post::find_one(1);
+        $post->clean_cache();
+        $post2 = Post::find_one(1);
+
+        // 更改两个对象的 title 属性
+        $post->title = 'changed post 1';
+        $post2->title = 'changed post 1 again';
+
+        // 保存时，后一次 save() 将会返回 false
+        $is_true = $post->save();
+        $is_false = $post2->save();
+        // #END EXAMPLE
+        $this->assertTrue($is_true);
+        $this->assertFalse($is_false);
     }
 
     function test_update_prop_by_arithmetic()
     {
         /**
          * #BEGIN EXAMPLE
+         *
+         * 使用算术运算更新对象属性
+         *
+         *
          *
          */
         $post_id = 1;

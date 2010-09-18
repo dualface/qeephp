@@ -9,7 +9,7 @@ use tests\qeephp\fixture\StorageFixture;
 /**
  * @collection post
  *
- * @update changed | check_changed
+ * @update changed, check_changed
  */
 class Post extends BaseModel
 {

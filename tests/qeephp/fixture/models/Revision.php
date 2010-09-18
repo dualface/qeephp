@@ -7,7 +7,7 @@ use qeephp\storage\BaseModel;
 /**
  * @collection revision
  *
- * @update all | check_non
+ * @update all, check_non
  */
 class Revision extends BaseModel
 {

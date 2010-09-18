@@ -8,7 +8,7 @@ use tests\includes\TestCase;
 use qeephp\storage\adapter\MySQLAdapter;
 use qeephp\tools\Logger;
 
-require_once __DIR__ . '/../../__init.php';
+require_once __DIR__ . '/__init.php';
 
 class MySQLAdapterTest extends TestCase
 {
