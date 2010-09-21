@@ -16,6 +16,9 @@ class StorageError extends BaseError
     const INCOMPLETE_MODEL_PROP     = 103;
     const UNKNOWN_MODEL_PROP        = 104;
     const ENTITY_NOT_SAVED          = 105;
+    const DEL_NEW_INSTANCE          = 106;
+    const COMPOSITE_ID_NOT_IMPLEMENTED = 107;
+    const UNEXPECTED_DELETE         = 108;
 
     static function not_set_id_error($class_name)
     {
@@ -24,22 +27,26 @@ class StorageError extends BaseError
 
     static function entity_not_found_error($class_name, $primary_key_value)
     {
-        return new StorageError("ENTITY_NOT_FOUND: {$class_name}, {$primary_key_value}", self::ENTITY_NOT_FOUND);
+        return new StorageError("ENTITY_NOT_FOUND: {$class_name}, {$primary_key_value}",
+                                self::ENTITY_NOT_FOUND);
     }
 
     static function invalid_config_error($class_name, $item_name)
     {
-        return new StorageError("INVALID_CONFIG: {$class_name}, {$item_name}", self::INVALID_CONFIG);
+        return new StorageError("INVALID_CONFIG: {$class_name}, {$item_name}",
+                                self::INVALID_CONFIG);
     }
 
     static function incomplete_model_prop_error($class_name, $prop)
     {
-        return new StorageError("INCOMPLETE_MODEL_PROP: {$class_name}, {$prop}", self::INCOMPLETE_MODEL_PROP);
+        return new StorageError("INCOMPLETE_MODEL_PROP: {$class_name}, {$prop}",
+                                self::INCOMPLETE_MODEL_PROP);
     }
 
     static function unknown_model_prop_error($class_name, $prop)
     {
-        return new StorageError("UNKNOWN_MODEL_PROP: {$class_name}, {$prop}", self::UNKNOWN_MODEL_PROP);
+        return new StorageError("UNKNOWN_MODEL_PROP: {$class_name}, {$prop}",
+                                self::UNKNOWN_MODEL_PROP);
     }
 
     static function entity_not_saved_error($class_name, $id)
@@ -53,19 +60,38 @@ class StorageError extends BaseError
         return new StorageError("NOT_SET_DOMAIN_CONFIG: {$domain}", self::NOT_SET_DOMAIN_CONFIG);
     }
 
-    static function connect_failed_error($raw_error_code, $raw_error_message, $domain)
+    static function connect_failed_error($raw_error_code, $raw_error_msg, $domain)
     {
-        return new StorageError("CONNECT_FAILED: {$domain}, {$raw_error_code}, {$raw_error_message}", self::CONNECT_FAILED);
+        return new StorageError("CONNECT_FAILED: {$domain}, {$raw_error_code}, {$raw_error_msg}",
+                                self::CONNECT_FAILED);
     }
 
-    static function query_failed_error($raw_error_code, $raw_error_message, $domain)
+    static function query_failed_error($raw_error_code, $raw_error_msg, $domain)
     {
-        return new StorageError("QUERY_FAILED: {$domain}, {$raw_error_code}, {$raw_error_message}", self::QUERY_FAILED);
+        return new StorageError("QUERY_FAILED: {$domain}, {$raw_error_code}, {$raw_error_msg}",
+                                self::QUERY_FAILED);
     }
 
     static function not_connect_error($domain)
     {
         return new StorageError("NOT_CONNECT: {$domain}", self::NOT_CONNECT);
+    }
+
+    static function del_new_instance_error($class_name)
+    {
+        return new StorageError("DEL_NEW_INSTANCE: {$class_name}", self::DEL_NEW_INSTANCE);
+    }
+
+    static function composite_id_not_implemented_error($method)
+    {
+        return new StorageError("COMPOSITE_ID_NOT_IMPLEMENTED: {$method}",
+                                self::COMPOSITE_ID_NOT_IMPLEMENTED);
+    }
+
+    static function unexpected_del_error($class_name, $result)
+    {
+        return new StorageError("UNEXPECTED_DELETE: {$class_name}, {$result}",
+                                self::UNEXPECTED_DELETE);
     }
 }
 
