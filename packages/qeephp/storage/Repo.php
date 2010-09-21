@@ -143,7 +143,7 @@ abstract class Repo implements IStorageDefine
         $meta = Meta::instance($class);
         if ($meta->composite_id)
         {
-            throw StorageError::not_implemented_error(__METHOD__ . ' with composite id');
+            throw StorageError::composite_id_not_implemented_error(__METHOD__);
         }
 
         $models = array();
@@ -228,7 +228,7 @@ abstract class Repo implements IStorageDefine
      */
     static function save(BaseModel $model)
     {
-        $meta = $model->my_meta();
+        $meta = $model->get_meta();
         $event = $meta->raise_event(self::BEFORE_SAVE_EVENT, null, $model);
         $is_create = $model->is_new();
         $result = ($is_create) ? self::create($model, $meta) : self::update($model, $meta);
@@ -246,7 +246,7 @@ abstract class Repo implements IStorageDefine
      */
     static function create(BaseModel $model, Meta $meta = null)
     {
-        if (!$meta) $meta = $model->my_meta();
+        if (!$meta) $meta = $model->get_meta();
         $meta->raise_event(self::BEFORE_CREATE_EVENT, null, $model);
         $record = $meta->props_to_fields($model->__to_array());
         $adapter = self::select_adapter($meta->domain(), $model);
@@ -268,7 +268,7 @@ abstract class Repo implements IStorageDefine
     {
         $changes = $model->changes();
         if (empty($changes)) return false;
-        if (!$meta) $meta = $model->my_meta();
+        if (!$meta) $meta = $model->get_meta();
         $meta->raise_event(self::BEFORE_UPDATE_EVENT, null, $model);
         $result = self::select_adapter($meta->domain(), $model)->update_model($model, $meta);
         if ($result) $model->__save(false);
@@ -285,38 +285,101 @@ abstract class Repo implements IStorageDefine
      */
     static function del(BaseModel $model)
     {
-        $event = $model->__beforeDel();
-        $this->raise_event(self::BEFORE_DEL_EVENT, array($model), $event);
+        if ($model->is_new())
+        {
+            throw StorageError::del_new_instance_error($model->get_meta()->class);
+        }
 
-        $primaryKey = $this->idname;
-        $primaryKeyValue = $model->$primaryKey;
-
-        $result = $this->adapter()->del($this->collection(),
-                                        $this->props_to_fields[$primaryKey],
-                                        $primaryKeyValue);
-
-        $this->raise_event(self::AFTER_DEL_EVENT, array($model, $result));
-        $model->__afterDel($result);
-        unset(self::$_objects[$id]);
-        return $result;
+        $meta = $model->get_meta();
+        $meta->raise_event(self::BEFORE_DEL_EVENT, array($model), $model);
+        $cond = ($meta->composite_id) ? $model->id() : array($meta->idname => $model->id());
+        $adapter = self::select_adapter($meta->domain(), $model);
+        $result = $adapter->del($meta->collection(), $cond, $meta->props_to_fields);
+        $meta->raise_event(self::AFTER_DEL_EVENT, array($model, $result), $model);
+        $cache_key = self::cache_key($meta->class, $model->id());
+        unset(self::$_objects[$cache_key]);
+        if (is_int($result) && $result > 1)
+        {
+            throw StorageError::unexpected_del_error($meta->class, $result);
+        }
+        return $result == 1;
     }
 
     /**
-     * 直接删除对象，不会构造对象实例，成功返回 true
+     * 删除指定的对象，如果成功返回 true
      *
-     * @param mixed $primaryKeyValue
+     * @param string $class
+     * @param mixed $id
      *
-     * @return bool
+     * @return true
      */
-    static function erase($primaryKeyValue)
+    static function del_one($class, $id)
     {
-        $event = call_user_func(array($this->class, '__beforeErase'), $primaryKeyValue);
-        $this->raise_event(self::BEFORE_ERASE_EVENT, array($primaryKeyValue), $event);
-        $result = $this->adapter()->del($this->collection(),
-                                        $this->props_to_fields[$this->idname],
-                                        $primaryKeyValue);
-        $this->raise_event(self::AFTER_ERASE_EVENT, array($primaryKeyValue, $result));
-        call_user_func(array($this->class, '__afterErase'), $primaryKeyValue, $result);
+        $meta = Meta::instance($class);
+        /* @var $meta Meta */
+        if (!is_array($id))
+        {
+            if ($meta->composite_id)
+            {
+                throw StorageError::composite_id_not_implemented_error(__METHOD__);
+            }
+            $cond = array($meta->idname => $id);
+        }
+        else
+        {
+            $cond = $id;
+        }
+        return self::find_one($class, $cond)->del();
+    }
+
+    /**
+     * 删除符合条件的对象，返回被删除对象的总数
+     *
+     * @param string $class
+     * @param mixed $cond
+     *
+     * @return int
+     */
+    static function del_by($class, $cond)
+    {
+        $finder = $class::find($cond);
+        /* @var $finder IAdapterFinder */
+        $count = 0;
+        $finder->each(function ($obj) use (& $count) {
+            if ($obj->del()) $count++;
+        });
+        return $count;
+    }
+
+    /**
+     * 直接从存储中删除符合条件的对象，返回被删除对象的总数
+     *
+     * @param string $class
+     * @param mixed $cond
+     *
+     * @return int
+     */
+    static function erase_by($class, $cond)
+    {
+        $meta = Meta::instance($class);
+        if (is_int($cond))
+        {
+            if ($meta->composite_id)
+            {
+            }
+            $cond = array($meta->idname => $cond);
+        }
+        else if (!is_array($cond))
+        {
+
+        }
+        $cond = ($meta->composite_id) ? $model->id() : array($meta->idname => $model->id());
+        $meta->raise_event(self::BEFORE_ERASE_EVENT, array($cond));
+
+        $adapter = self::select_adapter($meta->domain(), $cond);
+        $result = $adapter->del($meta->collection(), $cond, $meta->props_to_fields);
+
+        $meta->raise_event(self::AFTER_ERASE_EVENT, array($cond, $result));
         return $result;
     }
 
