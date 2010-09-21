@@ -144,7 +144,7 @@ abstract class BaseModel implements IStorageDefine
      *
      * @return Meta
      */
-    function my_meta()
+    function get_meta()
     {
         return Meta::instance(get_class($this));
     }
@@ -218,6 +218,18 @@ abstract class BaseModel implements IStorageDefine
     }
 
     /**
+     * 删除指定的对象，如果成功返回 true
+     *
+     * @param mixed $id
+     *
+     * @return true
+     */
+    static function del_one($id)
+    {
+        return Repo::del_one(get_called_class(), $id);
+    }
+
+    /**
      * 删除符合条件的对象，返回被删除对象的总数
      *
      * @param mixed $cond
@@ -226,7 +238,31 @@ abstract class BaseModel implements IStorageDefine
      */
     static function del_by($cond)
     {
-        return Repo::del_by(get_called_class(), func_get_args());
+        return Repo::del_by(get_called_class(), $cond);
+    }
+
+    /**
+     * 从存储中直接删除指定的对象，成功返回 true
+     *
+     * @param mixed $id
+     *
+     * @return bool
+     */
+    static function erase_one($id)
+    {
+        throw StorageError::not_implemented_error(__METHOD__);
+    }
+
+    /**
+     * 存存储中直接删除符合条件的对象，返回被删除对象的总数
+     *
+     * @param mixed $cond
+     *
+     * @return int
+     */
+    static function erase_by($cond)
+    {
+        throw StorageError::not_implemented_error(__METHOD__);
     }
 
     /**
@@ -289,7 +325,7 @@ abstract class BaseModel implements IStorageDefine
     function __save($is_create, $id = null)
     {
         $this->__is_new = false;
-        $meta = $this->my_meta();
+        $meta = $this->get_meta();
         $this->__props = array_merge($this->__props, $this->__changes);
         $this->__changes = array();
         if ($is_create)
