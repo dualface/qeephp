@@ -442,40 +442,119 @@ class RepoTest extends TestCase
          *
          * 使用算术运算更新对象属性
          *
+         * @api Repo::save()
+         * @api Repo::update()
+         * @api BaseModel::save()
          *
-         *
+         * 为了尽可能减少并发更新冲突，对于有些更新可以采用算术运算。详细讨论请参考：
+         * http://www.dualface.com/index.php/archives/1042
          */
+        // 读取对象的当前值
         $post_id = 1;
+        $origin = Post::find_one($post_id);
+        $origin->clean_cache();
+
+        // 对同一对象读取两次，模拟并发的请求
         $post = Post::find_one($post_id);
         $post->clean_cache();
-        $post->click_count += 100;
+        $post->click_count += 100;  // 在请求1中，click_count 增加了 100
         $post->title = strrev($post->title);
 
         $post2 = Post::find_one($post_id);
-        $post2->click_count += 100;
+        $post2->clean_cache();
+        $post2->click_count += 200; // 在请求2中，click_count 增加了 200
 
+        // 请求1、2分别保存
         $result = $post->save();
         $result2 = $post2->save();
+        
+        // 重新读取对象，获得对象的新值
+        $current = Post::find_one($post_id);
+        // click_count 的当前值应该在原有基础上增加了 300
+        $is_equals = ($origin->click_count + 300) == $current->click_count;
         // #END EXAMPLE
 
         $this->assertTrue($result);
         $this->assertTrue($result2);
-
-        $record = $this->_get_post_record($post_id);
-        $this->assertType('array', $record);
-        $this->assertEquals($post_id, $record['post_id']);
-        $this->assertEquals(strrev($this->_recordset[$post_id]['title']), $record['title']);
-        $this->assertEquals($this->_recordset[$post_id]['click_count'] + 200, $record['click_count']);
+        $this->assertTrue($is_equals);
     }
 
-    function test_del()
+    function test_del_and_del_one()
     {
-        $this->markTestIncomplete();
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 删除指定的一个对象
+         *
+         * @api Repo::del_one()
+         * @api BaseModel::del()
+         */
+        // 查询指定主键值的对象并删除，成功返回 true
+        $post = Post::find_one(1);
+        $is_true = $post->del();
+
+        // 另一种删除指定对象的方式，效果与 find_one(...)->del() 等同
+        $is_true_too = Post::del_one(2);
+        // #END EXAMPLE
+
+        $this->assertTrue($is_true);
+        $this->assertTrue($is_true_too);
+        $this->assertFalse($this->_get_post_record(1));
+        $this->assertFalse($this->_get_post_record(2));
     }
 
-    function test_erase()
+    function test_del_by()
     {
-        $this->markTestIncomplete();
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 删除符合条件的对象
+         *
+         * @api Repo::del_by()
+         * @api BaseModel::del_by()
+         *
+         * del_by() 先用 find() 查询出符合条件的对象，然后调用这些对象的 del() 方法。
+         */
+        // 删除 5 个对象
+        $result = Post::del_by(array('post_id >= ? AND post_id <= ?', 1, 5));
+        // #END EXAMPLE
+        $this->assertEquals(5, $result);
+    }
+
+    function test_erase_one()
+    {
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 从存储中删除指定的对象
+         *
+         * @api Repo::erase_one()
+         * @api BaseModel::erase_one()
+         *
+         * erase_one() 和 del_one() 的作用类似，但有下列区别：
+         *
+         * -  erase_one() 直接从存储中删除对象，不需要先查询出要删除的对象
+         * -  erase_one() 引发的事件和 del_one() 有区别
+         */
+        $post_id = 1;
+        $result = Post::erase_one($post_id);
+        // #END EXAMPLE
+        $this->assertEquals(1, $result);
+    }
+
+    function test_erase_by()
+    {
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 直接从存储中删除符合条件的对象，返回被删除对象的总数
+         *
+         * @api BaseModel::erase_by()
+         */
+        // 直接删除 5 个对象
+        $result = Post::erase_by(array('post_id >= ? AND post_id <= ?', 1, 5));
+        // #END EXAMPLE
+        $this->assertEquals(5, $result);
     }
 
     protected function setup()
