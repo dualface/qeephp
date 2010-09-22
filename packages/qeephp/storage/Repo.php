@@ -306,33 +306,6 @@ abstract class Repo implements IStorageDefine
     }
 
     /**
-     * 删除指定的对象，如果成功返回 true
-     *
-     * @param string $class
-     * @param mixed $id
-     *
-     * @return true
-     */
-    static function del_one($class, $id)
-    {
-        $meta = Meta::instance($class);
-        /* @var $meta Meta */
-        if (!is_array($id))
-        {
-            if ($meta->composite_id)
-            {
-                throw StorageError::composite_id_not_implemented_error(__METHOD__);
-            }
-            $cond = array($meta->idname => $id);
-        }
-        else
-        {
-            $cond = $id;
-        }
-        return self::find_one($class, $cond)->del();
-    }
-
-    /**
      * 删除符合条件的对象，返回被删除对象的总数
      *
      * @param string $class
@@ -352,6 +325,33 @@ abstract class Repo implements IStorageDefine
     }
 
     /**
+     * 从存储中直接删除一个对象
+     *
+     * @param string $class
+     * @param mixed $id
+     *
+     * @return bool
+     */
+    static function erase_one($class, $id)
+    {
+        $meta = Meta::instance($class);
+        if (!is_array($id))
+        {
+            if ($meta->composite_id)
+            {
+                throw StorageError::composite_id_not_implemented_error(__METHOD__);
+            }
+            $id = array($meta->idname => $id);
+        }
+        $result = self::erase_by($class, $id);
+        if (is_int($result) && $result > 1)
+        {
+            throw StorageError::unexpected_del_error($class, $result);
+        }
+        return $result == 1;
+    }
+
+    /**
      * 直接从存储中删除符合条件的对象，返回被删除对象的总数
      *
      * @param string $class
@@ -366,19 +366,13 @@ abstract class Repo implements IStorageDefine
         {
             if ($meta->composite_id)
             {
+                throw StorageError::composite_id_not_implemented_error(__METHOD__);
             }
             $cond = array($meta->idname => $cond);
         }
-        else if (!is_array($cond))
-        {
-
-        }
-        $cond = ($meta->composite_id) ? $model->id() : array($meta->idname => $model->id());
         $meta->raise_event(self::BEFORE_ERASE_EVENT, array($cond));
-
         $adapter = self::select_adapter($meta->domain(), $cond);
         $result = $adapter->del($meta->collection(), $cond, $meta->props_to_fields);
-
         $meta->raise_event(self::AFTER_ERASE_EVENT, array($cond, $result));
         return $result;
     }
