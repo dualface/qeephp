@@ -537,9 +537,9 @@ class ModelCRUDTest extends TestCase
          * -  erase_one() 引发的事件和 del_one() 有区别
          */
         $post_id = 1;
-        $result = Post::erase_one($post_id);
+        $is_true = Post::erase_one($post_id);
         // #END EXAMPLE
-        $this->assertEquals(1, $result);
+        $this->assertTrue($is_true);
     }
 
     function test_erase_by()
