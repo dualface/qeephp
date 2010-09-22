@@ -230,7 +230,7 @@ abstract class Repo implements IStorageDefine
     {
         $meta = $model->get_meta();
         $event = $meta->raise_event(self::BEFORE_SAVE_EVENT, null, $model);
-        $is_create = $model->is_new();
+        $is_create = $model->is_fresh();
         $result = ($is_create) ? self::create($model, $meta) : self::update($model, $meta);
         $meta->raise_event(self::AFTER_SAVE_EVENT, array($result), $model);
         return $result;
@@ -285,7 +285,7 @@ abstract class Repo implements IStorageDefine
      */
     static function del(BaseModel $model)
     {
-        if ($model->is_new())
+        if ($model->is_fresh())
         {
             throw StorageError::del_new_instance_error($model->get_meta()->class);
         }

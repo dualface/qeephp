@@ -10,7 +10,7 @@ abstract class BaseModel implements IStorageDefine
      * @var bool
      * @internal
      */
-    private $__is_new = true;
+    private $__is_fresh = true;
 
     /**
      * 对象实例从存储服务中读取出来时的值
@@ -58,13 +58,13 @@ abstract class BaseModel implements IStorageDefine
     /**
      * 指示模型对象实例是否来自于存储源
      *
-     * 如果模型对象实例是通过 find*() 方法获得的，则 is_new() 返回 false，否则返回 true。
+     * 如果模型对象实例是通过 find*() 方法获得的，则 is_fresh() 返回 false，否则返回 true。
      *
      * @return bool
      */
-    function is_new()
+    function is_fresh()
     {
-        return $this->__is_new;
+        return $this->__is_fresh;
     }
 
     /**
@@ -204,7 +204,7 @@ abstract class BaseModel implements IStorageDefine
      */
     function save()
     {
-        return $this->is_new() ? Repo::create($this) : Repo::update($this);
+        return $this->is_fresh() ? Repo::create($this) : Repo::update($this);
     }
 
     /**
@@ -270,7 +270,7 @@ abstract class BaseModel implements IStorageDefine
      */
     function clean_cache()
     {
-        if ($this->is_new())
+        if ($this->is_fresh())
         {
             throw StorageError::entity_not_saved_error(get_class($this), $this->id());
         }
@@ -317,14 +317,14 @@ abstract class BaseModel implements IStorageDefine
 
     function __read(array $props)
     {
-        $this->__is_new = false;
+        $this->__is_fresh = false;
         $this->__props = $props;
         $this->__changes = array();
     }
 
     function __save($is_create, $id = null)
     {
-        $this->__is_new = false;
+        $this->__is_fresh = false;
         $meta = $this->get_meta();
         $this->__props = array_merge($this->__props, $this->__changes);
         $this->__changes = array();
