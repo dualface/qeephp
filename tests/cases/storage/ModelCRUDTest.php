@@ -13,7 +13,7 @@ use qeephp\tools\Logger;
 
 require_once __DIR__ . '/../__init.php';
 
-class RepoTest extends TestCase
+class ModelCRUDTest extends TestCase
 {
     private $_default_adapter;
     private $_recordset;
