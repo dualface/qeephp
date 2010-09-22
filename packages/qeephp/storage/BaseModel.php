@@ -218,15 +218,15 @@ abstract class BaseModel implements IStorageDefine
     }
 
     /**
-     * 删除指定的对象，如果成功返回 true
+     * 删除一个指定的对象，如果成功返回 true
      *
-     * @param mixed $id
+     * @param mixed $cond
      *
      * @return true
      */
-    static function del_one($id)
+    static function del_one($cond)
     {
-        return Repo::del_one(get_called_class(), $id);
+        return static::find_one($cond)->del();
     }
 
     /**
@@ -250,7 +250,7 @@ abstract class BaseModel implements IStorageDefine
      */
     static function erase_one($id)
     {
-        throw StorageError::not_implemented_error(__METHOD__);
+        return Repo::erase_one(get_called_class(), $id);
     }
 
     /**
@@ -262,7 +262,7 @@ abstract class BaseModel implements IStorageDefine
      */
     static function erase_by($cond)
     {
-        throw StorageError::not_implemented_error(__METHOD__);
+        return Repo::erase_by(get_called_class(), $cond);
     }
 
     /**
