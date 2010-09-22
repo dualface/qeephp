@@ -16,7 +16,7 @@ use tests\fixture\models\users\Administrator;
 use qeephp\storage\IStorageDefine;
 use qeephp\storage\Meta;
 
-require __DIR__ . '/../../__init.php';
+require __DIR__ . '/__init.php';
 
 class MetaTest extends TestCase
 {
