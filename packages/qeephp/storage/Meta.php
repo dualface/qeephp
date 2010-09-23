@@ -512,6 +512,31 @@ class Meta implements IStorageDefine
     }
 
     /**
+     * 从属性数组构造一个模型对象实例
+     *
+     * @param array $props
+     *
+     * @return class
+     */
+    function props_to_model(array $props)
+    {
+        if ($this->use_extends)
+        {
+            $by = $this->extends['by'];
+            $type = $props[$by];
+            $class = $this->extends['classes'][$type];
+        }
+        else
+        {
+            $class = $this->class;
+        }
+        $model = new $class();
+        /* @var $model BaseModel */
+        $model->__read($props);
+        return $model;
+    }
+
+    /**
      * 初始化 Meta 对象
      */
     private function _init()
