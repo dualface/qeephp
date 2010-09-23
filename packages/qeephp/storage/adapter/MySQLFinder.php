@@ -16,6 +16,7 @@ class MySQLFinder implements IAdapterFinder
     private $_limit;
     private $_result;
     private $_class;
+    private $_meta;
     private $_query_completed = false;
 
     function __construct(MySQLAdapter $adapter, $collection, $cond, $fields = null, array $alias = null)
@@ -25,6 +26,11 @@ class MySQLFinder implements IAdapterFinder
         $this->_cond = $cond;
         $this->_fields = $fields;
         $this->_alias = $alias;
+    }
+
+    function  __destruct()
+    {
+        $this->_free();
     }
 
     /**
@@ -37,6 +43,7 @@ class MySQLFinder implements IAdapterFinder
     function set_model_class($class)
     {
         $this->_class = $class;
+        $this->_meta  = Meta::instance($class);
         return $this;
     }
 
@@ -94,7 +101,7 @@ class MySQLFinder implements IAdapterFinder
             $this->_free();
             return $record;
         }
-        return $this->__record($record);
+        return $this->_record($record);
     }
 
     /**
@@ -109,7 +116,7 @@ class MySQLFinder implements IAdapterFinder
         $records = array();
         while ($record = mysql_fetch_assoc($this->_result))
         {
-            $records[] = $this->__record($record);
+            $records[] = $this->_record($record);
         }
         $this->_free();
         return $records;
@@ -126,7 +133,7 @@ class MySQLFinder implements IAdapterFinder
         if (!$this->_result) return;
         while ($record = mysql_fetch_assoc($this->_result))
         {
-            call_user_func($func, $this->__record($record));
+            call_user_func($func, $this->_record($record));
         }
         $this->_free();
     }
@@ -152,12 +159,10 @@ class MySQLFinder implements IAdapterFinder
         }
     }
 
-    protected function __record(array $record)
+    protected function _record(array $record)
     {
         if (!$this->_class) return $record;
-        $model = new $this->_class();
-        $model->__read(Meta::instance($this->_class)->fields_to_props($record));
-        return $model;
+        return $this->_meta->props_to_model($this->_meta->fields_to_props($record));
     }
 }
 
