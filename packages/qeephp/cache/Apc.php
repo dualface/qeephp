@@ -15,7 +15,7 @@ class Apc implements ICache
         return false;
     }
 
-    function mget(array $keys)
+    function get_multi(array $keys)
     {
         $values = array();
         foreach ($keys as $key)
@@ -30,7 +30,7 @@ class Apc implements ICache
         apc_store($key, $value, $ttl);
     }
 
-    function mset(array $values, $ttl = null)
+    function set_multi(array $values, $ttl = null)
     {
         foreach ($values as $key => $value)
         {
@@ -43,7 +43,7 @@ class Apc implements ICache
         apc_delete($key);
     }
 
-    function mdel(array $keys)
+    function del_multi(array $keys)
     {
         foreach ($keys as $key)
         {

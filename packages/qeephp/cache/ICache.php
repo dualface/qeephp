@@ -1,6 +1,6 @@
 <?php
 
-namespace qeephp\interfaces;
+namespace qeephp\cache;
 
 /**
  * 缓存服务接口
@@ -25,7 +25,7 @@ interface ICache
      *
      * @return array
      */
-    function mget(array $keys);
+    function get_multi(array $keys);
 
     /**
      * 将数据放入缓存
@@ -42,7 +42,7 @@ interface ICache
      * @param array $values
      * @param int $ttl
      */
-    function mset(array $values, $ttl = null);
+    function set_multi(array $values, $ttl = null);
 
     /**
      * 删除数据
@@ -56,7 +56,7 @@ interface ICache
      *
      * @param array $keys
      */
-    function mdel(array $keys);
+    function del_multi(array $keys);
 
     /**
      * 返回用于特定存储域的缓存服务对象实例

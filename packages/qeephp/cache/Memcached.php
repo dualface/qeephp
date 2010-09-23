@@ -51,7 +51,7 @@ class Memcached implements ICache
         return $this->_memcached->get($key);
     }
 
-    function mget(array $keys)
+    function get_multi(array $keys)
     {
         return $this->_memcached->getMulti($keys);
     }
@@ -61,7 +61,7 @@ class Memcached implements ICache
         $this->_memcached->set($key, $value, $ttl);
     }
 
-    function mset(array $values, $ttl = null)
+    function set_multi(array $values, $ttl = null)
     {
         $this->_memcached->setMulti($values, $ttl);
     }
@@ -71,7 +71,7 @@ class Memcached implements ICache
         $this->_memcached->delete($key);
     }
     
-    function mdel(array $keys)
+    function del_multi(array $keys)
     {
         foreach ($keys as $key)
         {
