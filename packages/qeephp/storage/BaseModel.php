@@ -176,13 +176,13 @@ abstract class BaseModel implements IStorageDefine
      *
      * 仅能用于单主键的对象，$cond 参数为包含多个主键值的数组。
      *
-     * @param array $cond
+     * @param array $id_list
      *
      * @return array
      */
-    static function find_multi(array $cond)
+    static function find_multi(array $id_list)
     {
-        return Repo::find_multi(get_called_class(), $cond);
+        return Repo::find_multi(get_called_class(), $id_list);
     }
 
     /**
