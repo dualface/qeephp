@@ -388,17 +388,16 @@ class Meta implements IStorageDefine
     {
         if (empty($this->events_listener[$event_name])) return false;
 
-        if (!is_array($args)) $args = array();
         $event = new Event($event_name, $this->events_listener[$event_name]);
         if ($model)
         {
-            // 如果提供了 $model 参数，则检查 $model 对象是否提供了事件处理方法
-            $method = array($model, $event_name);
-            if (is_callable($method))
-            {
-                $event->append_listeners(array($method));
-            }
+            if (!is_array($args)) $args = array();
             array_unshift($args, $model);
+            // 如果提供了 $model 参数，则检查 $model 对象是否提供了事件处理方法
+            if (method_exists($model, $event_name))
+            {
+                $event->append_listener(array($model, $event_name));
+            }
         }
         $event->dispatching_with_args($args);
         return $event;
@@ -535,6 +534,7 @@ class Meta implements IStorageDefine
         $model = new $class();
         /* @var $model BaseModel */
         $model->__read($props);
+        $this->raise_event(self::AFTER_READ_EVENT, null, $model);
         return $model;
     }
 
