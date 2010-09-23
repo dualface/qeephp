@@ -163,19 +163,19 @@ abstract class BaseModel implements IStorageDefine
     }
 
     /**
-     * 按照指定条件查询一个模型实例
+     * 按照主键值查询指定的对象
      *
-     * @param mixed $cond
+     * @param mixed $id
      *
      * @return BaseModel
      */
-    static function find_one($cond)
+    static function find_one($id)
     {
-        return Repo::find_one(get_called_class(), $cond);
+        return Repo::find_one(get_called_class(), $id);
     }
 
     /**
-     * 按照主键值查询多个模型实例
+     * 按照主键值查询多个对象
      *
      * 仅能用于单主键的对象，$cond 参数为包含多个主键值的数组。
      *
@@ -266,18 +266,6 @@ abstract class BaseModel implements IStorageDefine
     static function erase_by($cond)
     {
         return Repo::erase_by(get_called_class(), $cond);
-    }
-
-    /**
-     * 清除对象的缓存
-     */
-    function clean_cache()
-    {
-        if ($this->is_fresh())
-        {
-            throw StorageError::entity_not_saved_error(get_class($this), $this->id());
-        }
-        Repo::clean_cache(get_class($this), $this->id());
     }
 
     /**
