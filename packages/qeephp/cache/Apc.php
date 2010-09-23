@@ -2,8 +2,6 @@
 
 namespace qeephp\cache;
 
-use qeephp\interfaces\ICache;
-
 /**
  * Apc 提供进程内缓存服务
  */

@@ -3,7 +3,6 @@
 namespace qeephp\cache;
 
 use qeephp\Config;
-use qeephp\interfaces\ICache;
 use qeephp\errors\CacheError;
 
 /**

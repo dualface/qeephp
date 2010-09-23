@@ -2,7 +2,7 @@
 
 namespace qeephp\storage\plugins;
 
-use qeephp\interfaces\ICache;
+use qeephp\cache\ICache;
 use qeephp\storage\Meta;
 use qeephp\storage\ModelEvent;
 use qeephp\errors\StorageError;
@@ -12,7 +12,7 @@ class CachePlugin extends BasePlugin
     /**
      * 缓存服务对象
      *
-     * @var ICacheService
+     * @var ICache
      */
     private $_cache;
 
@@ -163,7 +163,7 @@ class CachePlugin extends BasePlugin
     /**
      * 返回缓存后端
      *
-     * @return ICacheService
+     * @return ICache
      */
     private function _cache()
     {
