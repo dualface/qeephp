@@ -7,7 +7,6 @@ use qeephp\storage\adapter\IAdapterFinder;
 
 abstract class Repo implements IStorageDefine
 {
-    private static $_objects = array();
     private static $_adapter_instances = array();
 
     /**
@@ -22,82 +21,48 @@ abstract class Repo implements IStorageDefine
         if (!isset(self::$_adapter_instances[$domain]))
         {
             $config = Config::get("storage.domains.{$domain}");
-            if (empty($config))
-            {
-                throw StorageError::not_set_domain_config_error($domain);
-            }
+            if (empty($config)) throw StorageError::not_set_domain_config_error($domain);
             $class = $config['class'];
-            $adapter = new $class($config);
-            self::$_adapter_instances[$domain] = $adapter;
+            self::$_adapter_instances[$domain] = new $class($config);
         }
         return self::$_adapter_instances[$domain];
     }
 
     /**
-     * 查找一个对象
+     * 按照主键值查询指定的对象
      *
      * @param string $class
-     * @param mixed $cond
+     * @param mixed $id
      *
      * @return BaseModel
      */
-    static function find_one($class, $cond)
+    static function find_one($class, $id)
     {
         $meta = Meta::instance($class);
-        if (is_int($cond))
+        $cond = self::get_cond_from_id($meta, $id);
+        $event = $meta->raise_event(self::BEFORE_FIND_EVENT, array($cond, 'find_one'));
+        if ($event && $event->completed && ($event->result instanceof BaseModel))
         {
-            $cache_key = self::cache_key($class, $cond);
-            if (isset(self::$_objects[$cache_key])) return self::$_objects[$cache_key];
-            $cond = array($meta->idname => $cond);
-        }
-
-        $event = $meta->raise_event(self::BEFORE_FINDONE_EVENT, array($cond));
-        if ($event && $event->completed && is_array($event->result))
-        {
-            $record = $event->result;
+            $model = $event->result;
         }
         else
         {
             $adapter = self::select_adapter($meta->domain());
-            /* @var $adapter IAdapter */
             $record = $adapter->find_one($meta->collection(), $cond, null, $meta->props_to_fields);
-        }
-        if (!is_array($record))
-        {
-            if (is_array($cond)) $cond = http_build_query ($cond);
-            throw StorageError::entity_not_found_error($class, $cond);
+            if (!is_array($record)) throw StorageError::entity_not_found_error($class, $cache_key);
+            $model = $meta->props_to_model($meta->fields_to_props($record));
         }
 
-        /**
-         * 查找到数据后，会以主键值判断该数据是否已经在对象缓存中。如果缓存中找到了数据，则不构造新的模型对象，
-         * 而是直接返回缓存的对象。也就是说这会导致读取的数据被抛弃。
-         */
-        $props = $meta->fields_to_props($record);
-        if ($meta->composite_id)
+        if (self::cache_key($class, $model->id(true)) != self::cache_key($class, $cond))
         {
-            $id = array();
-            foreach ($meta->idname as $idname)
-            {
-                $id[$idname] = $props[$idname];
-            }
+            throw StorageError::unknown_error('unexpected find_one() result, mismatch id.');
         }
-        else
-        {
-            $id = $props[$meta->idname];
-        }
-        $cache_key = self::cache_key($class, $id);
-        if (isset(self::$_objects[$cache_key])) return self::$_objects[$cache_key];
-
-        $model = self::props_to_model($meta, $props);
-        self::$_objects[$cache_key] = $model;
-        $meta->raise_event(self::AFTER_FINDONE_EVENT, array($cond, $model, $record));
+        $meta->raise_event(self::AFTER_FIND_EVENT, array($cond, 'find_one', array($model)));
         return $model;
     }
 
     /**
-     * 按照主键值查询多个模型实例
-     *
-     * 仅能用于单主键的对象，$cond 参数为包含多个主键值的数组。
+     * 按照主键值查询多个对象
      *
      * @param string $class
      * @param array $id_list
@@ -107,64 +72,34 @@ abstract class Repo implements IStorageDefine
     static function find_multi($class, array $id_list)
     {
         $meta = Meta::instance($class);
-        if ($meta->composite_id)
-        {
-            throw StorageError::composite_id_not_implemented_error(__METHOD__);
-        }
+        if ($meta->composite_id) throw StorageError::composite_id_not_implemented_error(__METHOD__);
 
-        $models = array();
-        foreach ($id_list as $offset => $id)
-        {
-            $cache_key = self::cache_key($class, $id);
-            if (isset(self::$_objects[$cache_key]))
-            {
-                $models[$id] = self::$_objects[$cache_key];
-                unset($id_list[$offset]);
-                continue;
-            }
-        }
-        if (empty($id_list)) return $models;
-
-        $event = $meta->raise_event(self::BEFORE_FINDMULTI_EVENT, array($id_list));
+        $event = $meta->raise_event(self::BEFORE_FIND_EVENT, array($id_list, 'find_multi'));
         if ($event && $event->completed && is_array($event->result))
         {
-            $records = $event->result;
-            $not_founds = array_diff($id_list, array_keys($records));
+            $models = $event->result;
+            $query_id_list = array_diff($id_list, array_keys($models));
         }
         else
         {
-            $records = array();
-            $not_founds = $id_list;
+            $models = array();
+            $query_id_list = $id_list;
         }
 
-        if (!empty($not_founds))
+        if (!empty($query_id_list))
         {
-            $id_field = $meta->props_to_fields[$meta->idname];
+            $idname  = $meta->idname;
+            $idfield = $meta->props_to_fields[$idname];
             $adapter = self::select_adapter($meta->domain());
-            $finder  = $adapter->find($meta->collection(), array($id_field => array($not_founds)));
-            $finder->each(function ($record) use (& $records, $id_field) {
-                $records[$record[$id_field]] = $record;
-            });
-        }
-
-        $more_models = array();
-        foreach ($records as $record)
-        {
-            $props = $meta->fields_to_props($record);
-            $id = $props[$meta->idname];
-            $cache_key = self::cache_key($class, $id);
-            if (isset(self::$_objects[$cache_key]))
+            $finder  = $adapter->find($meta->collection(), array($idfield => $query_id_list))
+                               ->set_model_class($class);
+            while ($model = $finder->fetch())
             {
-                $models[$id] = self::$_objects[$cache_key];
-                continue;
+                $models[$model->$idname] = $model;
             }
-
-            $model = self::props_to_model($meta, $props);
-            self::$_objects[$cache_key] = $model;
-            $models[$id] = $model;
-            $more_models[$id] = $model;
         }
-        $meta->raise_event(self::AFTER_FINDMULTI_EVENT, array($id_list, $more_models, $records));
+
+        $meta->raise_event(self::AFTER_FIND_EVENT, array($id_list, 'find_multi', $models));
         return $models;
     }
 
@@ -180,9 +115,8 @@ abstract class Repo implements IStorageDefine
     {
         $meta = Meta::instance($class);
         $adapter = self::select_adapter($meta->domain());
-        $finder = $adapter->find($meta->collection(), $cond, null, $meta->props_to_fields);
-        $finder->set_model_class($class);
-        return $finder;
+        return $adapter->find($meta->collection(), $cond, null, $meta->props_to_fields)
+                       ->set_model_class($class);
     }
 
     /**
@@ -258,13 +192,11 @@ abstract class Repo implements IStorageDefine
         }
 
         $meta = $model->get_meta();
-        $meta->raise_event(self::BEFORE_DEL_EVENT, array($model), $model);
+        $meta->raise_event(self::BEFORE_DEL_EVENT, null, $model);
         $cond = ($meta->composite_id) ? $model->id() : array($meta->idname => $model->id());
         $adapter = self::select_adapter($meta->domain());
         $result = $adapter->del($meta->collection(), $cond, $meta->props_to_fields);
-        $meta->raise_event(self::AFTER_DEL_EVENT, array($model, $result), $model);
-        $cache_key = self::cache_key($meta->class, $model->id());
-        unset(self::$_objects[$cache_key]);
+        $meta->raise_event(self::AFTER_DEL_EVENT, array($result), $model);
         if (is_int($result) && $result > 1)
         {
             throw StorageError::unexpected_del_error($meta->class, $result);
@@ -344,48 +276,56 @@ abstract class Repo implements IStorageDefine
         return $result;
     }
 
-    static function clean_cache($class = null, $id = null)
+    static function cache_key($class, array $id)
     {
-        if (!is_null($id))
-        {
-            unset(self::$_objects[self::cache_key($class, $id)]);
-        }
-        else
-        {
-            self::$_objects = array();
-        }
-    }
-
-    static function props_to_model(Meta $meta, array $props)
-    {
-        if ($meta->use_extends)
-        {
-            $by = $meta->extends['by'];
-            $type = $props[$by];
-            $class = $meta->extends['classes'][$type];
-        }
-        else
-        {
-            $class = $meta->class;
-        }
-        $model = new $class();
-        /* @var $model BaseModel */
-        $model->__read($props);
-        return $model;
-    }
-
-    static function cache_key($class, $id)
-    {
-        if (is_array($id))
-        {
-            $key = http_build_query($id);
-        }
-        else
-        {
-            $key = (string)$id;
-        }
-
+        if (count($id) > 1) ksort($id, SORT_ASC);
+        $key = http_build_query($id);
         return "{$class}.{$key}";
+    }
+
+    static function get_cond_from_id(Meta $meta, $id)
+    {
+        static $error_composite_id = 'invalid parameter $id, with composite_id.';
+        static $error_one_id = 'invalid parameter $id';
+
+        $cond = array();
+        if ($meta->composite_id)
+        {
+            if (!is_array($id))
+            {
+                throw StorageError::invalid_parameters_error($error_composite_id);
+            }
+            foreach ($meta->idname as $idname)
+            {
+                if (!isset($id[$idname]) || strlen($id[$idname]) == 0)
+                {
+                    throw StorageError::invalid_parameters_error($error_composite_id);
+                }
+                $cond[$idname] = $id[$idname];
+                unset($id[$idname]);
+            }
+            if (!empty($id))
+            {
+                throw StorageError::invalid_parameters_error($error_composite_id);
+            }
+        }
+        else
+        {
+            if (is_array($id))
+            {
+                reset($id);
+                if (count($id) > 1 || key($id) != $meta->idname)
+                {
+                    throw StorageError::invalid_parameters_error($error_one_id);
+                }
+                $cond = $id;
+            }
+            else
+            {
+                $cond = array($meta->idname => $id);
+            }
+        }
+        return $cond;
     }
 }
 
