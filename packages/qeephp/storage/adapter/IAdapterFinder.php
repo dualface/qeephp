@@ -9,7 +9,7 @@ interface IAdapterFinder
      *
      * @param string $class
      *
-     * @return MySQLFinder
+     * @return IAdapterFinder
      */
     function set_model_class($class);
 
