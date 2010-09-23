@@ -388,6 +388,7 @@ class Meta implements IStorageDefine
     {
         if (empty($this->events_listener[$event_name])) return false;
 
+        if (!is_array($args)) $args = array();
         $event = new Event($event_name, $this->events_listener[$event_name]);
         if ($model)
         {
@@ -397,6 +398,7 @@ class Meta implements IStorageDefine
             {
                 $event->append_listeners(array($method));
             }
+            array_unshift($args, $model);
         }
         $event->dispatching_with_args($args);
         return $event;
