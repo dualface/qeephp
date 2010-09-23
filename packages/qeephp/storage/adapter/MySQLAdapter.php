@@ -3,13 +3,13 @@
 namespace qeephp\storage\adapter;
 
 use qeephp\tools\ILogger;
-use qeephp\storage\IStorageDefine;
+use qeephp\storage\IModel;
 use qeephp\storage\BaseModel;
 use qeephp\storage\Meta;
 use qeephp\storage\Expr;
 use qeephp\storage\StorageError;
 
-class MySQLAdapter implements IAdapter, IStorageDefine
+class MySQLAdapter implements IAdapter, IModel
 {
     /**
      * 配置
@@ -244,7 +244,7 @@ class MySQLAdapter implements IAdapter, IStorageDefine
 
         foreach ($meta->spec_update_props as $name => $policy)
         {
-            if ($policy == IStorageDefine::UPDATE_PROP_IGNORE)
+            if ($policy == IModel::UPDATE_PROP_IGNORE)
             {
                 unset($changes[$name]);
                 unset($update_cond[$name]);
@@ -258,11 +258,11 @@ class MySQLAdapter implements IAdapter, IStorageDefine
             unset($update_cond[$name]);
             switch ($policy)
             {
-            case IStorageDefine::UPDATE_PROP_INCR:
+            case IModel::UPDATE_PROP_INCR:
                 $changes[$name] = new Expr("[{$name}] + ?", $changes[$name] - $origin[$name]);
                 break;
-            case IStorageDefine::UPDATE_PROP_GTE_ZERO:
-            case IStorageDefine::UPDATE_PROP_GT_ZERO:
+            case IModel::UPDATE_PROP_GTE_ZERO:
+            case IModel::UPDATE_PROP_GT_ZERO:
                 if ($origin[$name] < $changes[$name])
                 {
                     $changes[$name] = new Expr("[{$name}] + ?", $changes[$name] - $origin[$name]);
@@ -271,7 +271,7 @@ class MySQLAdapter implements IAdapter, IStorageDefine
                 {
                     $offset = $origin[$name] - $changes[$name];
                     $changes[$name] = new Expr("[{$name}] - ?", $offset);
-                    $op = ($policy == IStorageDefine::UPDATE_PROP_GTE_ZERO) ? '>=' : '>';
+                    $op = ($policy == IModel::UPDATE_PROP_GTE_ZERO) ? '>=' : '>';
                     $update_cond[] = new Expr("[{$name}] {$op} ?", $offset);
                 }
             }

@@ -2,7 +2,7 @@
 
 namespace qeephp\storage;
 
-abstract class BaseModel implements IStorageDefine
+abstract class BaseModel implements IModel
 {
     /**
      * 指示模型对象实例是否来自于存储源

@@ -5,7 +5,7 @@ namespace qeephp\storage;
 use qeephp\Config;
 use qeephp\storage\adapter\IAdapterFinder;
 
-abstract class Repo implements IStorageDefine
+abstract class Repo implements IModel
 {
     private static $_adapter_instances = array();
 

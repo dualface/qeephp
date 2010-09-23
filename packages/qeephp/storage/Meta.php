@@ -72,7 +72,7 @@ use qeephp\storage\inspector\Inspector;
  *    将更新后的对象保存到存储集合时，针对特定属性应该采用的更新策略，
  *    默认设定为 overwrite
  */
-class Meta implements IStorageDefine
+class Meta implements IModel
 {
     /* 类型的字符串名称到实际类型定义之间的映射 */
     static $type_map = array(

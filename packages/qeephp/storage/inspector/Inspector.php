@@ -2,14 +2,14 @@
 
 namespace qeephp\storage\inspector;
 
-use qeephp\storage\IStorageDefine;
+use qeephp\storage\IModel;
 use qeephp\storage\Meta;
 use qeephp\errors\ModelError;
 
 /**
  * Inspector 用于分析一个模型类
  */
-abstract class Inspector implements IStorageDefine
+abstract class Inspector implements IModel
 {
     static $default_class_data = array(
         'domain'            => null,

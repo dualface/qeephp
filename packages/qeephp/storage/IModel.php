@@ -2,7 +2,7 @@
 
 namespace qeephp\storage;
 
-interface IStorageDefine
+interface IModel
 {
     /* 字段类型 */
     const TYPE_INT      = 'integer';

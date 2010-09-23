@@ -13,7 +13,7 @@ use tests\fixture\models\users\Guest;
 use tests\fixture\models\users\Member;
 use tests\fixture\models\users\Administrator;
 
-use qeephp\storage\IStorageDefine;
+use qeephp\storage\IModel;
 use qeephp\storage\Meta;
 
 require __DIR__ . '/__init.php';
@@ -121,7 +121,7 @@ class MetaTest extends TestCase
 
         $this->assertEquals(array('postId', 'rev_id'), $meta->idname);
         $this->assertEquals('rev_id', $meta->autoincr_idname);
-        $this->assertEquals(IStorageDefine::UPDATE_ALL_PROPS, $meta->update);
+        $this->assertEquals(IModel::UPDATE_ALL_PROPS, $meta->update);
         $this->assertTrue($meta->composite_id);
 
         // class: 复合主键（无自增）

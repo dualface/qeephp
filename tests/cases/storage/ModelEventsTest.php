@@ -6,7 +6,7 @@ use tests\includes\TestCase;
 use tests\fixture\models\Post;
 
 use qeephp\Event;
-use qeephp\storage\IStorageDefine;
+use qeephp\storage\IModel;
 use qeephp\storage\BaseModel;
 
 require_once __DIR__ . '/__init.php';
@@ -76,8 +76,8 @@ class ModelEventsTest extends ModelTestHelper
 
         // 注册事件响应方法
         $meta = Post::meta();
-        $meta->add_event_listener(IStorageDefine::BEFORE_FIND_EVENT, $before);
-        $meta->add_event_listener(IStorageDefine::AFTER_FIND_EVENT, $after);
+        $meta->add_event_listener(IModel::BEFORE_FIND_EVENT, $before);
+        $meta->add_event_listener(IModel::AFTER_FIND_EVENT, $after);
 
         // 对同一个对象查询两次，会触发两次事件，事件处理方法的 $mode 参数值为 find_one
         $post1 = Post::find_one(1);
@@ -107,8 +107,8 @@ class ModelEventsTest extends ModelTestHelper
          */
 
         // 取消注册事件响应方法
-        $meta->remove_event_listener(IStorageDefine::BEFORE_FIND_EVENT, $before);
-        $meta->remove_event_listener(IStorageDefine::AFTER_FIND_EVENT, $after);
+        $meta->remove_event_listener(IModel::BEFORE_FIND_EVENT, $before);
+        $meta->remove_event_listener(IModel::AFTER_FIND_EVENT, $after);
         // #END EXAMPLE
 
         $this->assertEquals(4, $check['before']);
@@ -145,7 +145,7 @@ class ModelEventsTest extends ModelTestHelper
             if (!isset($check['id_list'][$id])) $check['id_list'][$id] = 0;
             $check['id_list'][$id]++;
         };
-        Post::meta()->add_event_listener(IStorageDefine::AFTER_READ_EVENT, $handler);
+        Post::meta()->add_event_listener(IModel::AFTER_READ_EVENT, $handler);
 
         $post = Post::find_one(1);
         $post2 = Post::find_one(2);
@@ -168,7 +168,7 @@ class ModelEventsTest extends ModelTestHelper
          * )
          */
 
-        Post::meta()->remove_event_listener(IStorageDefine::AFTER_READ_EVENT, $handler);
+        Post::meta()->remove_event_listener(IModel::AFTER_READ_EVENT, $handler);
         // #END EXAMPLE
 
         $this->assertEquals(5, count($check['id_list']));
@@ -204,10 +204,10 @@ class ModelEventsTest extends ModelTestHelper
         };
 
         $meta = Post::meta();
-        $meta->add_event_listener(IStorageDefine::BEFORE_SAVE_EVENT, $handler);
-        $meta->add_event_listener(IStorageDefine::BEFORE_CREATE_EVENT, $handler);
-        $meta->add_event_listener(IStorageDefine::AFTER_CREATE_EVENT, $handler);
-        $meta->add_event_listener(IStorageDefine::AFTER_SAVE_EVENT, $handler);
+        $meta->add_event_listener(IModel::BEFORE_SAVE_EVENT, $handler);
+        $meta->add_event_listener(IModel::BEFORE_CREATE_EVENT, $handler);
+        $meta->add_event_listener(IModel::AFTER_CREATE_EVENT, $handler);
+        $meta->add_event_listener(IModel::AFTER_SAVE_EVENT, $handler);
 
         $post = new Post();
         $post->author = 'new author';
@@ -227,18 +227,18 @@ class ModelEventsTest extends ModelTestHelper
          * )
          */
 
-        $meta->remove_event_listener(IStorageDefine::BEFORE_SAVE_EVENT, $handler);
-        $meta->remove_event_listener(IStorageDefine::BEFORE_CREATE_EVENT, $handler);
-        $meta->remove_event_listener(IStorageDefine::AFTER_CREATE_EVENT, $handler);
-        $meta->remove_event_listener(IStorageDefine::AFTER_SAVE_EVENT, $handler);
+        $meta->remove_event_listener(IModel::BEFORE_SAVE_EVENT, $handler);
+        $meta->remove_event_listener(IModel::BEFORE_CREATE_EVENT, $handler);
+        $meta->remove_event_listener(IModel::AFTER_CREATE_EVENT, $handler);
+        $meta->remove_event_listener(IModel::AFTER_SAVE_EVENT, $handler);
         // #END EXAMPLE
 
         $this->assertEquals($post->id(), $id);
         $expected = array(
-            IStorageDefine::BEFORE_SAVE_EVENT,
-            IStorageDefine::BEFORE_CREATE_EVENT,
-            IStorageDefine::AFTER_CREATE_EVENT,
-            IStorageDefine::AFTER_SAVE_EVENT
+            IModel::BEFORE_SAVE_EVENT,
+            IModel::BEFORE_CREATE_EVENT,
+            IModel::AFTER_CREATE_EVENT,
+            IModel::AFTER_SAVE_EVENT
         );
         $this->assertEquals($expected, $check);
     }
@@ -268,10 +268,10 @@ class ModelEventsTest extends ModelTestHelper
         };
 
         $meta = Post::meta();
-        $meta->add_event_listener(IStorageDefine::BEFORE_SAVE_EVENT, $handler);
-        $meta->add_event_listener(IStorageDefine::BEFORE_UPDATE_EVENT, $handler);
-        $meta->add_event_listener(IStorageDefine::AFTER_UPDATE_EVENT, $handler);
-        $meta->add_event_listener(IStorageDefine::AFTER_SAVE_EVENT, $handler);
+        $meta->add_event_listener(IModel::BEFORE_SAVE_EVENT, $handler);
+        $meta->add_event_listener(IModel::BEFORE_UPDATE_EVENT, $handler);
+        $meta->add_event_listener(IModel::AFTER_UPDATE_EVENT, $handler);
+        $meta->add_event_listener(IModel::AFTER_SAVE_EVENT, $handler);
 
         $post = Post::find_one(1);
         $post->title = strrev($post->title);
@@ -289,18 +289,18 @@ class ModelEventsTest extends ModelTestHelper
          * )
          */
 
-        $meta->remove_event_listener(IStorageDefine::BEFORE_SAVE_EVENT, $handler);
-        $meta->remove_event_listener(IStorageDefine::BEFORE_UPDATE_EVENT, $handler);
-        $meta->remove_event_listener(IStorageDefine::AFTER_UPDATE_EVENT, $handler);
-        $meta->remove_event_listener(IStorageDefine::AFTER_SAVE_EVENT, $handler);
+        $meta->remove_event_listener(IModel::BEFORE_SAVE_EVENT, $handler);
+        $meta->remove_event_listener(IModel::BEFORE_UPDATE_EVENT, $handler);
+        $meta->remove_event_listener(IModel::AFTER_UPDATE_EVENT, $handler);
+        $meta->remove_event_listener(IModel::AFTER_SAVE_EVENT, $handler);
         // #END EXAMPLE
 
         $this->assertTrue($is_true);
         $expected = array(
-            IStorageDefine::BEFORE_SAVE_EVENT,
-            IStorageDefine::BEFORE_UPDATE_EVENT,
-            IStorageDefine::AFTER_UPDATE_EVENT,
-            IStorageDefine::AFTER_SAVE_EVENT
+            IModel::BEFORE_SAVE_EVENT,
+            IModel::BEFORE_UPDATE_EVENT,
+            IModel::AFTER_UPDATE_EVENT,
+            IModel::AFTER_SAVE_EVENT
         );
         $this->assertEquals($expected, $check);
     }
@@ -321,8 +321,8 @@ class ModelEventsTest extends ModelTestHelper
          * 当对象的 is_fresh() 方法返回 false 时，调用 del() 方法会删除存储中的对象。
          */
         $check = array(
-            IStorageDefine::BEFORE_DEL_EVENT => array(),
-            IStorageDefine::AFTER_DEL_EVENT => array()
+            IModel::BEFORE_DEL_EVENT => array(),
+            IModel::AFTER_DEL_EVENT => array()
         );
         $handler = function (Event $event, BaseModel $model) use (& $check) {
             // 记录被删除的对象的 ID
@@ -330,8 +330,8 @@ class ModelEventsTest extends ModelTestHelper
         };
 
         $meta = Post::meta();
-        $meta->add_event_listener(IStorageDefine::BEFORE_DEL_EVENT, $handler);
-        $meta->add_event_listener(IStorageDefine::AFTER_DEL_EVENT, $handler);
+        $meta->add_event_listener(IModel::BEFORE_DEL_EVENT, $handler);
+        $meta->add_event_listener(IModel::AFTER_DEL_EVENT, $handler);
 
         Post::find_one(1)->del();
         Post::del_one(2);
@@ -360,13 +360,13 @@ class ModelEventsTest extends ModelTestHelper
          * )
          */
 
-        $meta->remove_event_listener(IStorageDefine::BEFORE_DEL_EVENT, $handler);
-        $meta->remove_event_listener(IStorageDefine::AFTER_DEL_EVENT, $handler);
+        $meta->remove_event_listener(IModel::BEFORE_DEL_EVENT, $handler);
+        $meta->remove_event_listener(IModel::AFTER_DEL_EVENT, $handler);
         // #END EXAMPLE
 
         $expected = array(
-            IStorageDefine::BEFORE_DEL_EVENT => array(1, 2, 6, 7),
-            IStorageDefine::AFTER_DEL_EVENT => array(1, 2, 6, 7)
+            IModel::BEFORE_DEL_EVENT => array(1, 2, 6, 7),
+            IModel::AFTER_DEL_EVENT => array(1, 2, 6, 7)
         );
         $this->assertEquals($expected, $check);
 
