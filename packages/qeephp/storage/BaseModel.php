@@ -41,11 +41,14 @@ abstract class BaseModel implements IStorageDefine
     /**
      * 返回模型的主键值，如果有多个主键，则返回包含多个主键的数组
      *
+     * @param array $always_return_array
+     *
      * @return mixed
      */
-    function id()
+    function id($always_return_array = false)
     {
         $idname = static::meta()->idname;
+        if ($always_return_array && !is_array($idname)) $idname = array($idname);
         if (!is_array($idname)) return $this->$idname;
         $id = array();
         foreach ($idname as $name)
