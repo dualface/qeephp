@@ -3,7 +3,6 @@
 namespace qeephp\mvc;
 
 use qeephp\Config;
-use qeephp\errors\ActionError;
 use qeephp\debug\Debug;
 
 /**
