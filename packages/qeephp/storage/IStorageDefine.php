@@ -15,13 +15,10 @@ interface IStorageDefine
 
     /* 事件 */
     /* class events */
-    const BEFORE_FINDONE_EVENT  = '__before_findone';
-    const AFTER_FINDONE_EVENT   = '__after_findone';
-    const BEFORE_FINDMULTI_EVENT = '__before_findmulti';
-    const AFTER_FINDMULTI_EVENT = '__after_findmulti';
-    const BEFORE_ERASE_EVENT    = '__before_erase';
-    const AFTER_ERASE_EVENT     = '__after_erase';
+    const BEFORE_FIND_EVENT     = '__before_find';
+    const AFTER_FIND_EVENT      = '__after_find';
     /* instance events */
+    const AFTER_READ_EVENT      = '__after_read';
     const BEFORE_SAVE_EVENT     = '__before_save';
     const AFTER_SAVE_EVENT      = '__after_save';
     const BEFORE_CREATE_EVENT   = '__before_create';
