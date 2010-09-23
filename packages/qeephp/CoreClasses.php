@@ -169,13 +169,13 @@ class Event
     /**
      * 追加事件处理方法
      *
-     * @param array $listeners
+     * @param callback $listener
      *
      * @return Event
      */
-    function append_listeners(array $listeners)
+    function append_listener($listener)
     {
-        $this->listeners += $listeners;
+        $this->listeners[] = $listener;
         return $this;
     }
 
