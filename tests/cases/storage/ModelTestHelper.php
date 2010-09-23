@@ -41,7 +41,6 @@ abstract class ModelTestHelper extends TestCase
         $adapter->del('comment', null);
         $this->_default_adapter = null;
         $this->_recordset = null;
-        Repo::clean_cache();
     }
 
     protected function _create_recordset($collection, array $recordset, $idname = null)

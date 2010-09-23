@@ -25,107 +25,16 @@ class ModelCRUDTest extends ModelTestHelper
          * @api Repo::find_one()
          * @api BaseModel::find_one()
          *
-         * 如果 find_one() 的第二个参数是整数，则暗示以该值为主键值进行查询。
+         * find_one() 严格按照主键值查询指定的对象。
          *
          * 提示：BaseModel::find_one() 调用 Repo::find_one() 进行查询操作。
          */
-        $post = Post::find_one(5);
+        $post5 = Post::find_one(5);
+        $post6 = Post::find_one(array('postId' => 6));
         // #END EXAMPLE
-        $this->_check_post($post, 5);
-
-        /**
-         * #BEGIN EXAMPLE
-         *
-         * 使用更复杂的条件查询对象
-         *
-         * @api Repo::find_one()
-         * @api BaseModel::find_one()
-         *
-         * find_one() 方法和其他对象的 find_one() 方法一样支持多样化的查询条件。
-         * 参考 MySQLAdapter::find_one()。
-         */
-        $cond = array('post_id > ? AND post_id < ?', 3, 5);
-        $post = Post::find_one($cond);
-        // #END EXAMPLE
-        $this->_check_post($post, 4);
-
-        /**
-         * #BEGIN EXAMPLE
-         *
-         * Repo 的对象缓存
-         *
-         * @api Repo::find_one()
-         * @api BaseModel::find_one()
-         *
-         * 在当前请求执行过程中，曾经查询过的对象都会记录在 Repo 的对象缓存中，
-         * 因此对同一个对象的重复查询不会返回对象的多个实例。
-         *
-         * 要避免对同一对象查询时造成多次存储查询操作，应该总是使用主键值（整数）
-         * 或仅包含主键值的数组作为查询条件。
-         */
-        $post_id = 2;
-        // 以下三次 find_one() 调用仅会进行一次存储查询操作
-        $post_query1 = Post::find_one($post_id);
-        $post_query2 = Post::find_one($post_id);
-        $post_query3 = Post::find_one(array(Post::meta()->idname => $post_id));
-
-        /**
-         * 当使用不同的查询条件查询同一个对象时，可能进行多次存储查询。但除了对该对象的第一次查询，
-         * 后续的查询结果都会被直接丢弃，仍然返回先前查询所获得的对象实例。
-         */
-        $post_query4 = Post::find_one('post_id > 1 AND post_id < 3');
-
-        // 四次 find_one() 调用返回同一个对象实例
-        $is_equals = (($post_query1 === $post_query2)
-                     && ($post_query2 === $post_query3)
-                     && ($post_query3 === $post_query4));
-        // #END EXAMPLE
-        $this->assertTrue($is_equals);
-
-        /**
-         * #BEGIN EXAMPLE
-         *
-         * 清除 Repo 的对象缓存
-         *
-         * @api Repo::find_one()
-         * @api Repo::clean_cache();
-         * @api BaseModel::find_one()
-         *
-         * 如果有必要，可以通过 Repo::clean_cache() 方法清除 Repo 的对象缓存。
-         * 清除缓存后，对所有对象的查询将返回不同的实例。
-         */
-        $post3 = Post::find_one(3);
-        Repo::clean_cache();
-        $another_post3 = Post::find_one(3);
-        $is_not_equals = ($post3 !== $another_post3);
-        // #END EXAMPLE
-        $this->assertTrue($is_not_equals);
-
-        /**
-         * #BEGIN EXAMPLE
-         *
-         * 清除指定对象的缓存
-         *
-         * @api Repo::find_one()
-         * @api Repo::clean_cache();
-         * @api BaseModel::find_one()
-         * @api BaseModel::clear_cache()
-         *
-         * 调用对象的 clean_cache() 方法，可以清除掉该对象在 Repo 中的缓存。
-         * 清除缓存后，对同一对象的查询将返回不同的实例。
-         *
-         * 提示：BaseModel::clean_cache() 调用 Repo::clean_cache() 清除指定对象的缓存。
-         */
-        $post2 = Post::find_one(2);
-        $post4 = Post::find_one(4);
-        $post4->clean_cache();
-        $another_post2 = Post::find_one(2);
-        $another_post4 = Post::find_one(4);
-        $is_equals = ($post2 === $another_post2);
-        $is_not_equals = ($post4 !== $another_post4);
-        // #END EXAMPLE
-        $this->assertTrue($is_equals);
-        $this->assertTrue($is_not_equals);
+        
+        $this->_check_post($post5, 5);
+        $this->_check_post($post6, 6);
     }
 
     function test_find_multi()
@@ -140,23 +49,20 @@ class ModelCRUDTest extends ModelTestHelper
          * @api Repo::find_multi()
          * @api BaseModel::find_multi()
          *
-         * find_multi() 只支持使用一个主键的对象。$cond 只能是包含多个主键值的数组。
-         *
-         * 与 find_one() 一样，find_multi() 会缓存查询到的对象，并尽可能减少不必要的存储查询操作。
+         * find_multi() 只支持使用一个主键的对象。$id_list 参数只能是包含多个主键值的数组。
          *
          * 提示：BaseModel::find_multi() 调用 Repo::find_multi() 进行查询操作。
          */
         $post_id_list = array(1, 3, 5);
         $posts = Post::find_multi($post_id_list);
-        $other_posts = Post::find_multi($post_id_list);
         // #END EXAMPLE
+
         $this->assertEquals(3, count($posts));
         $id = 1;
         foreach ($posts as $post_id => $post)
         {
             $this->_check_post($post, $post_id);
             $this->assertEquals($id, $post_id);
-            $this->assertTrue($post === $other_posts[$post_id]);
             $id += 2;
         }
     }
@@ -175,8 +81,6 @@ class ModelCRUDTest extends ModelTestHelper
          * find() 方法的 $cond 参数和 IAdapter::find() 方法相同，可以使用各种类型的查询条件。
          *
          * 提示：BaseModel::find() 调用 Repo::find() 进行查询操作。
-         *
-         * 注意: find() 方法不会缓存查询得到的对象。
          */
         $posts = Post::find(array('post_id > ? AND post_id < ?', 1, 5))->fetch_all();
         // #END EXAMPLE
@@ -214,6 +118,7 @@ class ModelCRUDTest extends ModelTestHelper
         $post->click_count = 99;
         $id = $post->save();
         // # END EXAMPLE
+
         $this->assertEquals($post_id, $id);
         $record = $this->_get_post_record(99);
         $this->assertType('array', $record);
@@ -241,10 +146,10 @@ class ModelCRUDTest extends ModelTestHelper
         $comment->body    = 'new comment';
         $id = $comment->save();
         // #END EXAMPLE
+
         $this->assertType('int', $id);
         $this->assertEquals($id, $comment->id());
         $this->assertEquals($id, $comment->comment_id);
-
 
         /**
          * #BEGIN EXAMPLE
@@ -266,6 +171,7 @@ class ModelCRUDTest extends ModelTestHelper
         $rev->body    = 'post 1 rev';
         $id = $rev->save();
         // #END EXAMPLE
+
         $this->assertType('array', $id);
         $this->assertArrayHasKey('rev_id', $id);
         $this->assertArrayHasKey('postId', $id);
@@ -286,8 +192,7 @@ class ModelCRUDTest extends ModelTestHelper
          * @api Repo::update()
          * @api BaseModel::save()
          *
-         * 使用 find* 方法读取出来的对象，调用 Repo::save() 可将对象的改动保存起来。
-         * 
+         * 使用 find* 方法读取出来的对象，调用 save() 可将对象的改动保存起来。
          * 如果确实更新了存储的数据，则 save() 方法返回 true，否则返回 false。
          *
          * 提示：BaseModel::save() 调用 Repo::save() 进行对象的存储操作。
@@ -296,8 +201,8 @@ class ModelCRUDTest extends ModelTestHelper
         $post->title = strrev($post->title);
         $success = $post->save();
         // #END EXAMPLE
+
         $this->assertTrue($success);
-        $post->clean_cache();
         $another_post = Post::find_one(1);
         $this->assertFalse($post === $another_post);
         $this->assertEquals($post->title,  $another_post->title);
@@ -317,11 +222,11 @@ class ModelCRUDTest extends ModelTestHelper
          *
          * 默认情况下，保存改动后的对象到存储时，会保存对象的所有属性，即便只有部分属性发生了改变。
          * 关于更新策略的详细说明，参考 Meta 类的文档。
+         *
+         * 如果要在更新时只保存改动过的属性，则应该在模型类使用 @update 标注指定更新策略。
          */
         // 对同一对象读取两次，模拟并发的请求
-        Repo::clean_cache();
         $post = Post::find_one(1);
-        $post->clean_cache();
         $post2 = Post::find_one(1);
 
         // 分别修改两个实例的不同属性，并保存
@@ -331,11 +236,11 @@ class ModelCRUDTest extends ModelTestHelper
         $post2->save();
 
         // 重新读取对象，可以看到 title 和 author 属性都发生了变化
-        Repo::clean_cache();
         $post3 = Post::find_one(1);
         $is_title_euqals = ($post3->title == $post->title);
         $is_author_equals = ($post3->author == $post2->author);
         // #END EXAMPLE
+
         $this->assertTrue($is_title_euqals);
         $this->assertTrue($is_author_equals);
     }
@@ -360,9 +265,7 @@ class ModelCRUDTest extends ModelTestHelper
          * 有关 @update 的详细设定，请参考 Meta 文档。
          */
         // 对同一对象读取两次，模拟并发的请求
-        Repo::clean_cache();
         $post = Post::find_one(1);
-        $post->clean_cache();
         $post2 = Post::find_one(1);
 
         // 更改两个对象的 title 属性
@@ -373,6 +276,7 @@ class ModelCRUDTest extends ModelTestHelper
         $is_true = $post->save();
         $is_false = $post2->save();
         // #END EXAMPLE
+
         $this->assertTrue($is_true);
         $this->assertFalse($is_false);
     }
@@ -389,21 +293,18 @@ class ModelCRUDTest extends ModelTestHelper
          * @api BaseModel::save()
          *
          * 为了尽可能减少并发更新冲突，对于有些更新可以采用算术运算。详细讨论请参考：
-         * http://www.dualface.com/index.php/archives/1042
+         * http://dualface.qeephp.com/index.php/archives/1042
          */
         // 读取对象的当前值
         $post_id = 1;
         $origin = Post::find_one($post_id);
-        $origin->clean_cache();
 
         // 对同一对象读取两次，模拟并发的请求
         $post = Post::find_one($post_id);
-        $post->clean_cache();
         $post->click_count += 100;  // 在请求1中，click_count 增加了 100
         $post->title = strrev($post->title);
 
         $post2 = Post::find_one($post_id);
-        $post2->clean_cache();
         $post2->click_count += 200; // 在请求2中，click_count 增加了 200
 
         // 请求1、2分别保存
@@ -460,6 +361,7 @@ class ModelCRUDTest extends ModelTestHelper
         // 删除 5 个对象
         $result = Post::del_by(array('post_id >= ? AND post_id <= ?', 1, 5));
         // #END EXAMPLE
+
         $this->assertEquals(5, $result);
     }
 
@@ -481,7 +383,9 @@ class ModelCRUDTest extends ModelTestHelper
         $post_id = 1;
         $is_true = Post::erase_one($post_id);
         // #END EXAMPLE
+
         $this->assertTrue($is_true);
+        $this->assertFalse($this->_get_post_record(1));
     }
 
     function test_erase_by()
@@ -496,7 +400,13 @@ class ModelCRUDTest extends ModelTestHelper
         // 直接删除 5 个对象
         $result = Post::erase_by(array('post_id >= ? AND post_id <= ?', 1, 5));
         // #END EXAMPLE
+
         $this->assertEquals(5, $result);
+        $this->assertFalse($this->_get_post_record(1));
+        $this->assertFalse($this->_get_post_record(2));
+        $this->assertFalse($this->_get_post_record(3));
+        $this->assertFalse($this->_get_post_record(4));
+        $this->assertFalse($this->_get_post_record(5));
     }
 }
 
