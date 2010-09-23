@@ -8,33 +8,7 @@ use qeephp\storage\adapter\IAdapterFinder;
 abstract class Repo implements IStorageDefine
 {
     private static $_objects = array();
-    private static $_domains_dispatcher = array();
     private static $_adapter_instances = array();
-
-    /**
-     * 设定特定存储域的调度器
-     *
-     * @param string $domain
-     * @param callback $dispatcher
-     */
-    static function set_dispatcher($domain, $dispatcher)
-    {
-        if (!is_callable($dispatcher))
-        {
-            throw StorageError::not_callable_error();
-        }
-        self::$_domains_dispatcher[$domain] = $dispatcher;
-    }
-
-    /**
-     * 删除特定存储域的调度器
-     *
-     * @param string $domain
-     */
-    static function del_dispatcher($domain)
-    {
-        unset(self::$_domains_dispatcher[$domain]);
-    }
 
     /**
      * 为特定存储域选择匹配的存储服务实例
@@ -45,26 +19,18 @@ abstract class Repo implements IStorageDefine
      */
     static function select_adapter($domain)
     {
-        $key = $domain;
-        if (isset(self::$_domains_dispatcher[$domain]))
+        if (!isset(self::$_adapter_instances[$domain]))
         {
-            $dispatcher = self::$_domains_dispatcher[$domain];
-            $node = call_user_func($dispatcher, $domain);
-            if (strlen($node) > 0) $key .= ".{$node}";
-        }
-
-        if (!isset(self::$_adapter_instances[$key]))
-        {
-            $config = Config::get("storage.domains.{$key}");
+            $config = Config::get("storage.domains.{$domain}");
             if (empty($config))
             {
-                throw StorageError::not_set_domain_config_error($key);
+                throw StorageError::not_set_domain_config_error($domain);
             }
             $class = $config['class'];
             $adapter = new $class($config);
-            self::$_adapter_instances[$key] = $adapter;
+            self::$_adapter_instances[$domain] = $adapter;
         }
-        return self::$_adapter_instances[$key];
+        return self::$_adapter_instances[$domain];
     }
 
     /**
