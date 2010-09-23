@@ -129,7 +129,7 @@ abstract class Repo implements IStorageDefine
     static function save(BaseModel $model)
     {
         $meta = $model->get_meta();
-        $event = $meta->raise_event(self::BEFORE_SAVE_EVENT, null, $model);
+        $meta->raise_event(self::BEFORE_SAVE_EVENT, null, $model);
         $is_create = $model->is_fresh();
         $result = ($is_create) ? self::create($model, $meta) : self::update($model, $meta);
         $meta->raise_event(self::AFTER_SAVE_EVENT, array($result), $model);
@@ -269,11 +269,8 @@ abstract class Repo implements IStorageDefine
             }
             $cond = array($meta->idname => $cond);
         }
-        $meta->raise_event(self::BEFORE_ERASE_EVENT, array($cond));
         $adapter = self::select_adapter($meta->domain());
-        $result = $adapter->del($meta->collection(), $cond, $meta->props_to_fields);
-        $meta->raise_event(self::AFTER_ERASE_EVENT, array($cond, $result));
-        return $result;
+        return $adapter->del($meta->collection(), $cond, $meta->props_to_fields);
     }
 
     static function cache_key($class, array $id)
