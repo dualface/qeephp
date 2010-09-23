@@ -13,59 +13,6 @@ require_once __DIR__ . '/__init.php';
 
 class ModelCRUDTest extends ModelTestHelper
 {
-    function test_select_adapter()
-    {
-        $domain = StorageFixture::DEFAULT_DOMAIN;
-        $id = 1;
-
-        /**
-         * #BEGIN EXAMPLE
-         *
-         * 根据模型定义的存储域选择存储适配器
-         *
-         * @api Repo::set_dispatcher()
-         * @api Repo::select_adapter()
-         *
-         * 设定指定存储域的调度方法，并通过 select_adapter() 在运行时选择实际的存储适配器对象。
-         *
-         * -  自定义的调度函数接受两个参数：存储域名称和附加参数。附加参数可能是主键值或模型对象实例。
-         *    调度函数根据参数返回存储域节点名称，select_adapter() 根据调度函数的返回值构造完整的存储域名称，
-         *    并返回相应的存储对象。
-         *
-         * -  例如主键值＝1，下述调度函数会产生节点名称 node1。最后实际的存储域名称就是 $domain.node1。
-         *
-         * -  如果指定的存储域没有指定调度函数，则返回该存储域对应的存储对象。
-         */
-        $dispatcher = function ($domain, $arg) {
-            if ($arg instanceof BaseModel)
-            {
-                // 没有考虑复合主键的情况
-                $id = intval($arg->id());
-            }
-            else
-            {
-                $id = intval($arg);
-            }
-            $node_index = (($id - 1) % 2) + 1;
-            return "node{$node_index}";
-        };
-
-        Repo::set_dispatcher($domain, $dispatcher);
-        $adapter = Repo::select_adapter($domain, $id);
-        // #END EXAMPLE
-
-        $this->assertType('qeephp\\storage\\adapter\\IAdapter', $adapter);
-        $config = $adapter->config;
-        $this->assertEquals('qeephp_test_db1', $config['database']);
-
-        $adapter_second = Repo::select_adapter(StorageFixture::DEFAULT_DOMAIN, 2);
-        Repo::del_dispatcher(StorageFixture::DEFAULT_DOMAIN);
-        $this->assertType('qeephp\\storage\\adapter\\IAdapter', $adapter_second);
-        $config = $adapter_second->config;
-        $this->assertEquals('qeephp_test_db2', $config['database']);
-        $this->assertFalse($adapter === $adapter_second);
-    }
-
     function test_find_one()
     {
         $class = 'tests\\fixture\\models\\Post';

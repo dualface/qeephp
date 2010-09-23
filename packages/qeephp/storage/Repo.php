@@ -7,14 +7,6 @@ use qeephp\storage\adapter\IAdapterFinder;
 
 abstract class Repo implements IStorageDefine
 {
-    const FIND_ONE_SELECT   = 'find_one_select';
-    const FIND_MULTI_SELECT = 'find_multi_select';
-    const FIND_SELECT       = 'find_select';
-    const CREATE_SELECT     = 'create_select';
-    const UPDATE_SELECT     = 'update_select';
-    const DEL_SELECT        = 'del_select';
-    const ERASE_SELECT      = 'erase_select';
-
     private static $_objects = array();
     private static $_domains_dispatcher = array();
     private static $_adapter_instances = array();
@@ -48,18 +40,16 @@ abstract class Repo implements IStorageDefine
      * 为特定存储域选择匹配的存储服务实例
      *
      * @param string $domain
-     * @param string $method
-     * @param array $args
      *
      * @return qeephp\storage\adapter\IAdapter
      */
-    static function select_adapter($domain, $method = null, array $args = null)
+    static function select_adapter($domain)
     {
         $key = $domain;
         if (isset(self::$_domains_dispatcher[$domain]))
         {
             $dispatcher = self::$_domains_dispatcher[$domain];
-            $node = call_user_func($dispatcher, $domain, $method, $args);
+            $node = call_user_func($dispatcher, $domain);
             if (strlen($node) > 0) $key .= ".{$node}";
         }
 
@@ -102,7 +92,7 @@ abstract class Repo implements IStorageDefine
         }
         else
         {
-            $adapter = self::select_adapter($meta->domain(), self::FIND_ONE_SELECT, array($cond));
+            $adapter = self::select_adapter($meta->domain());
             /* @var $adapter IAdapter */
             $record = $adapter->find_one($meta->collection(), $cond, null, $meta->props_to_fields);
         }
@@ -184,15 +174,11 @@ abstract class Repo implements IStorageDefine
         if (!empty($not_founds))
         {
             $id_field = $meta->props_to_fields[$meta->idname];
-            $adapters = self::select_adapter($meta->domain(), self::FIND_MULTI_SELECT, array($id_list));
-            if (!is_array($adapters)) $adapters = array($adapters);
-            foreach ($adapters as $adapter)
-            {
-                $finder  = $adapter->find($meta->collection(), array($id_field => array($not_founds)));
-                $finder->each(function ($record) use (& $records, $id_field) {
-                    $records[$record[$id_field]] = $record;
-                });
-            }
+            $adapter = self::select_adapter($meta->domain());
+            $finder  = $adapter->find($meta->collection(), array($id_field => array($not_founds)));
+            $finder->each(function ($record) use (& $records, $id_field) {
+                $records[$record[$id_field]] = $record;
+            });
         }
 
         $more_models = array();
@@ -227,7 +213,7 @@ abstract class Repo implements IStorageDefine
     static function find($class, $cond)
     {
         $meta = Meta::instance($class);
-        $adapter = self::select_adapter($meta->domain(), self::FIND_SELECT, array($cond));
+        $adapter = self::select_adapter($meta->domain());
         $finder = $adapter->find($meta->collection(), $cond, null, $meta->props_to_fields);
         $finder->set_model_class($class);
         return $finder;
@@ -263,7 +249,7 @@ abstract class Repo implements IStorageDefine
         if (!$meta) $meta = $model->get_meta();
         $meta->raise_event(self::BEFORE_CREATE_EVENT, null, $model);
         $record = $meta->props_to_fields($model->__to_array());
-        $adapter = self::select_adapter($meta->domain(), self::CREATE_SELECT, array($model));
+        $adapter = self::select_adapter($meta->domain());
         $id = $adapter->insert($meta->collection(), $record);
         $model->__save(true, $id);
         $meta->raise_event(self::AFTER_CREATE_EVENT, array($id), $model);
@@ -284,7 +270,7 @@ abstract class Repo implements IStorageDefine
         if (empty($changes)) return false;
         if (!$meta) $meta = $model->get_meta();
         $meta->raise_event(self::BEFORE_UPDATE_EVENT, null, $model);
-        $adapter = self::select_adapter($meta->domain(), self::UPDATE_SELECT, array($model));
+        $adapter = self::select_adapter($meta->domain());
         $result = $adapter->update_model($model, $meta);
         if ($result) $model->__save(false);
         $meta->raise_event(self::AFTER_UPDATE_EVENT, array($result), $model);
@@ -308,7 +294,7 @@ abstract class Repo implements IStorageDefine
         $meta = $model->get_meta();
         $meta->raise_event(self::BEFORE_DEL_EVENT, array($model), $model);
         $cond = ($meta->composite_id) ? $model->id() : array($meta->idname => $model->id());
-        $adapter = self::select_adapter($meta->domain(), self::DEL_SELECT, array($model));
+        $adapter = self::select_adapter($meta->domain());
         $result = $adapter->del($meta->collection(), $cond, $meta->props_to_fields);
         $meta->raise_event(self::AFTER_DEL_EVENT, array($model, $result), $model);
         $cache_key = self::cache_key($meta->class, $model->id());
@@ -386,7 +372,7 @@ abstract class Repo implements IStorageDefine
             $cond = array($meta->idname => $cond);
         }
         $meta->raise_event(self::BEFORE_ERASE_EVENT, array($cond));
-        $adapter = self::select_adapter($meta->domain(), self::ERASE_SELECT, array($cond));
+        $adapter = self::select_adapter($meta->domain());
         $result = $adapter->del($meta->collection(), $cond, $meta->props_to_fields);
         $meta->raise_event(self::AFTER_ERASE_EVENT, array($cond, $result));
         return $result;
