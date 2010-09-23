@@ -207,7 +207,7 @@ abstract class BaseModel implements IStorageDefine
      */
     function save()
     {
-        return $this->is_fresh() ? Repo::create($this) : Repo::update($this);
+        return Repo::save($this);
     }
 
     /**
