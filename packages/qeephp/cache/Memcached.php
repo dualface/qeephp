@@ -30,12 +30,12 @@ class Memcached implements ICache
         $domains_config = val($memcached_config, 'domains');
         if (!is_array($domains_config) || empty($domains_config[$domain]))
         {
-            throw CacheError::notSetDomainConfigError($domain);
+            throw CacheError::not_set_domain_config_error($domain);
         }
         $domain_config = $domains_config[$domain];
         if (!is_array($domain_config))
         {
-            throw CacheError::notSetDomainConfigError($domain);
+            throw CacheError::not_set_domain_config_error($domain);
         }
 
         $this->_memcached = new \Memcached($domain);

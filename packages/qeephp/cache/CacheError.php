@@ -1,6 +1,8 @@
 <?php
 
-namespace qeephp\errors;
+namespace qeephp\cache;
+
+use qeephp\BaseError;
 
 /**
  * 与缓存有关的异常
