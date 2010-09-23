@@ -3,7 +3,6 @@
 namespace qeephp\cache;
 
 use qeephp\Config;
-use qeephp\errors\CacheError;
 
 /**
  * Memcached 提供分布式缓存服务
