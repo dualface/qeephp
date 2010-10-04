@@ -1,6 +1,6 @@
 <?php
 
-require __DIR__ . '/CoreClasses.php';
+require __DIR__ . '/Autoload.php';
 
 /**
  * DIRECTORY_SEPARATOR 的简写
