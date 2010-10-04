@@ -28,17 +28,16 @@ class MySQLAdapterTest extends TestCase
         $this->assertType('resource', $this->_mysql->handle());
     }
 
-    /**
-     * 按照指定条件查询，返回符合条件的第一个记录，如果查询结果为空则返回 false
-     *
-     * @api MySQLAdapter::find_one()
-     */
     function test_find_one()
     {
         $mysql = $this->_mysql;
 
         /**
          * #BEGIN EXAMPLE
+         *
+         * 按照指定条件查询，返回符合条件的第一个记录，如果查询结果为空则返回 false
+         *
+         * @api MySQLAdapter::find_one()
          * 
          * 查询条件有四种写法：
          * 
@@ -75,17 +74,6 @@ class MySQLAdapterTest extends TestCase
         $this->assertEquals(2, count($post3));
     }
 
-    /**
-     * 按照指定条件进行查询，并返回实现了 MySQLFinder 接口的查询对象
-     *
-     * @api MySQLAdapter::find()
-     * @api MySQLFinder::sort()
-     * @api MySQLFinder::skip()
-     * @api MySQLFinder::limit()
-     * @api MySQLFinder::fetch()
-     * @api MySQLFinder::fetch_all()
-     * @api MySQLFinder::each()
-     */
     function test_find()
     {
         $mysql = $this->_mysql;
@@ -93,8 +81,18 @@ class MySQLAdapterTest extends TestCase
         /**
          * #BEGIN EXAMPLE
          *
-         * 一次性查询多条记录，返回一个实现了 MySQLFinder 接口的查询结果对象。
-         * 然后利用 MySQLFinder::fetch() 方法提取所有数据。
+         * 按照指定条件进行查询，并返回实现了 IAdapterFinder 接口的查询对象
+         *
+         * @api MySQLAdapter::find()
+         * @api MySQLFinder::sort()
+         * @api MySQLFinder::skip()
+         * @api MySQLFinder::limit()
+         * @api MySQLFinder::fetch()
+         * @api MySQLFinder::fetch_all()
+         * @api MySQLFinder::each()
+         *
+         * 一次性查询多条记录，返回一个实现了 IAdapterFinder 接口的查询结果对象。
+         * 然后利用 IAdapterFinder::fetch() 方法提取数据。
          */
         // 查询 post_id 为 1, 3, 5 的记录
         $finder = $mysql->find('post', array('post_id IN (?)', array(1, 3, 5)));
@@ -107,7 +105,7 @@ class MySQLAdapterTest extends TestCase
         // 查询 post_id 为 2, 4, 6 的记录
         $posts2 = $mysql->find('post', array('post_id' => array(2, 4, 6)))->fetch_all();
 
-        // 查询所有 post_id <= 3 的记录，并用 MySQLFinder::fetch_all() 方法取出所有查询结果
+        // 查询所有 post_id <= 3 的记录，并用 IAdapterFinder::fetch_all() 方法取出所有查询结果
         $posts3 = $mysql->find('post', 'post_id <= 3', 'post_id, title')->fetch_all();
 
         /**
@@ -156,17 +154,16 @@ class MySQLAdapterTest extends TestCase
         }
     }
 
-    /**
-     * 插入一条记录
-     *
-     * @api MySQLAdapter::insert()
-     */
     function test_insert()
     {
         $mysql = $this->_mysql;
 
         /**
          * #BEGIN EXAMPLE
+         *
+         * 插入一条记录
+         *
+         * @api MySQLAdapter::insert()
          *
          * 插入记录时，如果有自增类型的主键字段，可以不提供该字段的值。
          *
@@ -193,11 +190,6 @@ class MySQLAdapterTest extends TestCase
         $this->assertEquals($new_post_id + 1, $other_post_id);
     }
 
-    /**
-     * 更新符合条件的记录
-     *
-     * @api MySQLAdapter::update()
-     */
     function test_update()
     {
         $mysql = $this->_mysql;
@@ -208,6 +200,10 @@ class MySQLAdapterTest extends TestCase
 
         /**
          * #BEGIN EXAMPLE
+         *
+         * 更新符合条件的记录
+         *
+         * @api MySQLAdapter::update()
          *
          * update() 方法的更新条件和 find_one()、find() 方法的查询条件写法一致。
          */
@@ -247,17 +243,16 @@ class MySQLAdapterTest extends TestCase
         }
     }
 
-    /**
-     * 删除符合条件的记录
-     *
-     * @api MySQLAdapter::del()
-     */
     function test_del()
     {
         $mysql = $this->_mysql;
 
         /**
          * #BEGIN EXAMPLE
+         *
+         * 删除符合条件的记录
+         *
+         * @api MySQLAdapter::del()
          *
          * del() 方法返回被删除的记录数。
          *
@@ -274,17 +269,16 @@ class MySQLAdapterTest extends TestCase
         $this->assertEquals(6, $result3);
     }
 
-    /**
-     * 提交数据库事务
-     *
-     * @api MySQLAdapter::begin()
-     * @api MySQLAdapter::commit()
-     */
     function test_commit()
     {
         $mysql = $this->_mysql;
         /**
          * #BEGIN EXAMPLE
+         *
+         * 提交数据库事务
+         *
+         * @api MySQLAdapter::begin()
+         * @api MySQLAdapter::commit()
          * 
          * 事务中所有的查询都成功后，commit() 方法才能成功执行。
          */
@@ -305,13 +299,26 @@ class MySQLAdapterTest extends TestCase
 
     function test_rollback()
     {
-        $this->_mysql->begin();
+        $mysql = $this->_mysql;
+
+        /**
+         * #BEGIN EXAMPLE
+         *
+         * 回滚数据库事务
+         *
+         * @api MySQLAdapter::begin()
+         * @api MySQLAdapter::rollback()
+         *
+         * 不管事务中是否有失败的查询，总是撤销所有改动。
+         */
+        $mysql->begin();
         $title = "new post " . mt_rand(1, 999);
         $new_post = array('title' => $title);
-        $new_post_id = $this->_mysql->insert('post', $new_post);
-        $this->_mysql->rollback();
+        $new_post_id = $mysql->insert('post', $new_post);
+        $mysql->rollback();
+        // #END EXAMPLE
 
-        $post = $this->_mysql->find_one('post', array('post_id' => $new_post_id));
+        $post = $mysql->find_one('post', array('post_id' => $new_post_id));
         $this->assertFalse($post);
     }
 
@@ -387,6 +394,5 @@ class MySQLAdapterTest extends TestCase
         }
         return $result;
     }
-
 }
 
