@@ -20,7 +20,7 @@ class CacheError extends BaseError
      */
     static function not_set_domain_config_error($domain)
     {
-        return new CacheError("NOT_SET_DOMAIN_CONFIG: {$domain}", self::NOT_SET_DOMAIN_CONFIG);
+        return new static("NOT_SET_DOMAIN_CONFIG: {$domain}", self::NOT_SET_DOMAIN_CONFIG);
     }
 }
 

@@ -14,12 +14,12 @@ class ActionError extends BaseError
 
     static function not_set_tool_error($toolname)
     {
-        return new ActionError("NOT_SET_TOOL: {$toolname}", self::NOT_SET_TOOL);
+        return new static("NOT_SET_TOOL: {$toolname}", self::NOT_SET_TOOL);
     }
 
     static function action_not_found_error($action_name)
     {
-        return new ActionError("ACTION_NOT_FOUND: {$action_name}", self::ACTION_NOT_FOUND);
+        return new static("ACTION_NOT_FOUND: {$action_name}", self::ACTION_NOT_FOUND);
     }
 }
 
