@@ -43,11 +43,11 @@ abstract class BaseAction
     /**
      * 执行动作
      */
-    function execute()
+    function __execute()
     {
-        if (!$this->_before_execute()) return;
-        $this->result = $this->_execute();
-        $this->_after_execute();
+        if (!$this->__before_execute()) return;
+        $this->result = $this->execute();
+        $this->__after_execute();
     }
 
     /**
@@ -70,14 +70,14 @@ abstract class BaseAction
      *
      * @return mixed
      */
-    abstract protected function _execute();
+    abstract function execute();
 
     /**
      * 执行动作之前调用，如果返回 false 则阻止动作的执行
      *
      * @return bool
      */
-    protected function _before_execute()
+    protected function __before_execute()
     {
         return true;
     }
@@ -85,7 +85,7 @@ abstract class BaseAction
     /**
      * 执行动作之后调用
      */
-    protected function _after_execute()
+    protected function __after_execute()
     {
     }
 }
