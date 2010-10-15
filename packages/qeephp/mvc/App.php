@@ -52,13 +52,6 @@ class App
     private $_action_accessor;
 
     /**
-     * 默认的动作名称
-     *
-     * @var string
-     */
-    private $_default_action;
-
-    /**
      * 应用程序实例
      *
      * @var App
@@ -86,7 +79,6 @@ class App
         $this->_tools = array_change_key_case($this->_tools, \CASE_LOWER);
 
         $this->_action_accessor = Config::get('app.action_name_accessor', self::DEFAULT_ACTION_ACCESSOR);
-        $this->_default_action = Config::get('app.default_action_name', self::DEFAULT_ACTION);
 
         set_exception_handler(array($this, '_exception_handler'));
 
@@ -106,6 +98,14 @@ class App
     static function set_instance(App $app)
     {
         self::$_instance = $app;
+    }
+
+    /**
+     * 取消设置应用程序实例
+     */
+    static function unset_instance()
+    {
+        self::$_instance = null;
     }
 
     /**
@@ -157,7 +157,11 @@ class App
         // 解析请求 URL 中的动作名称
         if (is_null($action_name))
         {
-            $action_name = request($this->_action_accessor, $this->_default_action);
+            $action_name = request($this->_action_accessor);
+            if (empty($action_name))
+            {
+                $action_name = Config::get('app.default_action_name', self::DEFAULT_ACTION);
+            }
         }
         $action_name = self::_format_action_name($action_name);
 
@@ -193,7 +197,7 @@ class App
         $action_name = self::_format_action_name($action_name);
         if (!$action_name)
         {
-            $action_name = $this->_default_action;
+            $action_name = Config::get('app.default_action_name', self::DEFAULT_ACTION);
         }
         $url = get_request_baseuri();
         $url .= "?{$this->_action_accessor}={$action_name}";
@@ -262,11 +266,13 @@ class App
         $charset = Config::get('app.output_charset', 'utf-8');
         if (is_object($result) && method_exists($result, 'execute'))
         {
+            header('X-Powered-By-QeePHP: ' . QEE_VER);
             header("Content-Type: text/html; charset={$charset}");
             return $result->execute();
         }
         elseif (is_string($result))
         {
+            header('X-Powered-By-QeePHP: ' . QEE_VER);
             header("Content-Type: text/html; charset={$charset}");
             return $result;
         }
@@ -274,29 +280,6 @@ class App
         {
             return $result;
         }
-
-//        $contents = ob_get_clean();
-//        if (Config::get('output_gzip') && function_exists('gzcompress'))
-//        {
-//            $accept_encoding = server('HTTP_ACCEPT_ENCODING');
-//            $encoding = false;
-//            if (strpos($accept_encoding, 'gzip') !== false)
-//            {
-//                $encoding = 'gzip';
-//            }
-//            elseif (strpos($accept_encoding, 'x-gzip') !== false)
-//            {
-//                $encoding = 'x-gzip';
-//            }
-//            if ($encoding && strlen($contents) >= 256)
-//            {
-//                header("Content-Encoding: {$encoding}");
-//                echo "\x1f\x8b\x08\x00\x00\x00\x00\x00";
-//                $contents = gzcompress($contents, 9);
-//            }
-//        }
-//        header('X-Powered-By-QeePHP: ' . Q::version());
-//        echo $contents;
     }
 
     /**
