@@ -18,6 +18,11 @@ define('QEE_PATH', rtrim(__DIR__, '/\\') . DS);
 defined('QEE_DEBUG') or define('QEE_DEBUG', false);
 
 /**
+ * 定义 QeePHP 版本号
+ */
+define('QEE_VER', 'qeephp-3.0');
+
+/**
  * 返回应用程序对象
  *
  * @return \qeephp\mvc\App
@@ -72,14 +77,14 @@ function arr($input, $delimiter = ',')
 /**
  * 构造 URL 地址
  *
- * @param array|string $udi 用于构造 URL 的 UDI 参数
+ * @param string $action_name 动作名
  * @param array|string $params 要添加到 URL 中的附加参数
  *
  * @return string 构造好的 URL 地址
  */
-function url($udi, $params = null)
+function url($action_name, $params = null)
 {
-    return \qeephp\Q::app()->url($udi, $params);
+    return \qeephp\mvc\App::instance()->url($action_name, $params);
 }
 
 /**
