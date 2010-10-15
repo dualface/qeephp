@@ -2,13 +2,13 @@
 
 namespace tests\fixture;
 
-use \qeephp\mvc\App;
+use qeephp\mvc\App;
 
-class QeePHPTestApp extends App
+class TestApp extends App
 {
-    function __construct(array $config)
+    function __construct()
     {
-        parent::__construct('tests\\qeephp', __DIR__, $config);
+        parent::__construct(__NAMESPACE__, __DIR__, false);
     }
 }
 
