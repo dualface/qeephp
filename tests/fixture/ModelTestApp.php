@@ -2,7 +2,7 @@
 
 namespace tests\fixture;
 
-class ModelTestApp extends QeePHPTestApp
+class ModelTestApp extends TestApp
 {
     function __construct()
     {
