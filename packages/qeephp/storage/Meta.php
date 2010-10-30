@@ -299,21 +299,7 @@ class Meta implements IModel
     {
         if (!isset(self::$_meta_instances[$class]))
         {
-            $cache = Config::get('storage.meta_cache', false) && function_exists('apc_fetch');
-            $cache_key = "meta.instances.{$class}";
-            $meta = null;
-            /* @var $meta Meta */
-            if ($cache)
-            {
-                $meta = apc_fetch($cache_key);
-                if ($meta) $meta->bind_plugins($meta->bind);
-            }
-            if (!$meta) $meta = new Meta($class);
-            if ($cache)
-            {
-                apc_store($cache_key, $meta, Config::get('storage.meta_cache_ttl', 60));
-            }
-            self::$_meta_instances[$class] = $meta;
+            self::$_meta_instances[$class] = new Meta($class);
         }
         return self::$_meta_instances[$class];
     }
