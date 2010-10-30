@@ -49,7 +49,7 @@ abstract class Repo implements IModel
         {
             $adapter = self::select_adapter($meta->domain());
             $record = $adapter->find_one($meta->collection(), $cond, null, $meta->props_to_fields);
-            if (!is_array($record)) throw StorageError::entity_not_found_error($class, $cache_key);
+            if (!is_array($record)) throw StorageError::entity_not_found_error($class, self::cache_key($class, $cond));
             $model = $meta->props_to_model($meta->fields_to_props($record));
         }
 

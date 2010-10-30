@@ -45,7 +45,6 @@ class MetaTest extends TestCase
                         "{$class}::\${$name} tagged @update, not found \$meta->spec_update_props['{$name}']");
                 $this->assertEquals($prop['update'], $meta->spec_update_props[$name]);
             }
-
         }
     }
 

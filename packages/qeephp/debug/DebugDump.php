@@ -92,7 +92,7 @@ class DebugDump
 
         array_push($this->stack, $object);
 
-        if ($object instanceof Exception)
+        if ($object instanceof \Exception)
         {
             return $this->escape_exception($object, $depth);
         }
