@@ -14,6 +14,8 @@ define('PACKAGES_PATH', ROOT_PATH . '/packages');
 define('QEEPHP_SRC_PATH', PACKAGES_PATH . '/qeephp');
 define('TEST_SRC_PATH', __DIR__);
 
+error_reporting(E_ALL | E_STRICT);
+
 require_once QEEPHP_SRC_PATH . '/__init.php';
 
 Autoload::import(PACKAGES_PATH);
@@ -24,3 +26,4 @@ $logger_config = array(
     'level' => ILogger::TRACE,
 );
 Config::set('logger.test', $logger_config);
+

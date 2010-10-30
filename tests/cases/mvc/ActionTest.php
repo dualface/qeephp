@@ -51,14 +51,48 @@ class ActionTest extends TestCase
 
     function test_view()
     {
-        $this->markTestIncomplete();
+        $view = $this->_app->view('index', array());
+        $this->assertType('qeephp\\mvc\\view', $view);
+        $this->assertEquals('indexView', $view->execute());
+
+        $view = $this->_app->view('help', array());
+        $this->assertType('qeephp\\mvc\\view', $view);
+        $this->assertEquals('helpView', $view->execute());
+
+        $view = $this->_app->view('tests.empty', array());
+        $this->assertType('qeephp\\mvc\\view', $view);
+        $this->assertEquals('tests.emptyView', $view->execute());
+
+        $this->assertEquals('viewView', $this->_app->run('view'));
+        $this->assertEquals('tests.viewView', $this->_app->run('tests.view'));
     }
 
     function test_tool()
     {
-        $this->markTestIncomplete();
+        $other_tool_config = array('test_key' => 'test_value');
+        $more_tool_config = array(
+            'class' => 'tests\\fixture\\tools\\more\\MoreTool',
+            'test_key' => 'test_value',
+        );
+        Config::set('app.tools', array(
+            'other' => $other_tool_config,
+            'more' => $more_tool_config,
+        ));
+        $holder = $this->_app->tool('holder');
+        $this->assertType('tests\\fixture\\tools\\HolderTool', $holder);
+
+        $holder2 = $this->_app->tool('holder');
+        $this->assertSame($holder, $holder2);
+
+        $other = $this->_app->tool('other');
+        $this->assertType('tests\\fixture\\tools\\OtherTool', $other);
+        $this->assertEquals($other_tool_config, $other->config);
+
+        $more = $this->_app->tool('more');
+        $this->assertType('tests\\fixture\\tools\\more\\MoreTool', $more);
+        $this->assertEquals($more_tool_config, $more->config);
     }
-    
+
     protected function setup()
     {
         Config::set('app.default_action_name', App::DEFAULT_ACTION);
