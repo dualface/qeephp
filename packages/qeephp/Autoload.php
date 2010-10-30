@@ -66,3 +66,6 @@ abstract class Autoload
         }
     }
 }
+
+// 最后的初始化工作
+spl_autoload_register(array('\\qeephp\\Autoload', '_autoload'));

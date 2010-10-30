@@ -1,6 +1,8 @@
 <?php
 
-require __DIR__ . '/Autoload.php';
+if (defined('QEE_VER')) return;
+
+require_once __DIR__ . '/Autoload.php';
 
 /**
  * DIRECTORY_SEPARATOR 的简写
@@ -318,6 +320,3 @@ function dump($vars, $label = null, $depth = null, $return = false)
     if ($return) return ob_get_clean();
 }
 
-
-// 最后的初始化工作
-spl_autoload_register(array('\\qeephp\\Autoload', '_autoload'));
