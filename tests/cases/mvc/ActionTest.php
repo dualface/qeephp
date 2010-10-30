@@ -43,7 +43,10 @@ class ActionTest extends TestCase
 
     function test_url()
     {
-        $this->markTestIncomplete();
+        $url = $this->_app->url('help');
+        $this->assertEquals('?action=help', $url);
+        $url = $this->_app->url('more', array('tag' => 'any', 'order' => 'desc'));
+        $this->assertEquals('?action=more&tag=any&order=desc', $url);
     }
 
     function test_view()
@@ -55,7 +58,6 @@ class ActionTest extends TestCase
     {
         $this->markTestIncomplete();
     }
-    
     
     protected function setup()
     {
@@ -69,4 +71,3 @@ class ActionTest extends TestCase
         App::unset_instance();
     }
 }
- 

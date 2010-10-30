@@ -31,13 +31,6 @@ class App
     private $_app_namespace = 'app';
 
     /**
-     * 应用程序使用的工具
-     *
-     * @var array
-     */
-    private $_tools;
-
-    /**
      * 工具对象集合
      *
      * @var array
@@ -75,11 +68,7 @@ class App
         $timezone = Config::get('app.timezone', self::DEFAULT_TIMEZONE);
         date_default_timezone_set($timezone);
 
-        $this->_tools = (array)Config::get('app.tools');
-        $this->_tools = array_change_key_case($this->_tools, \CASE_LOWER);
-
         $this->_action_accessor = Config::get('app.action_name_accessor', self::DEFAULT_ACTION_ACCESSOR);
-
         set_exception_handler(array($this, '_exception_handler'));
 
         $autoload_tools = arr(Config::get('app.autoload_tools'));
@@ -180,7 +169,7 @@ class App
         // 执行动作
         $action = new $action_class_name($this, $action_name);
         /* @var $action BaseAction */
-        $action->execute();
+        $action->__execute();
         return $this->_process_result($action->result);
     }
 
@@ -232,13 +221,24 @@ class App
     {
         if (!isset($this->_tools_instance[$toolname]))
         {
-            if (!$this->has_tool($toolname))
+            $tool_config = Config::get("app.tools/{$toolname}");
+            if (is_array($tool_config) && !empty($tool_config['class']))
             {
-                throw ActionError::not_set_tool_error($toolname);
+                $class = $tool_config['class'];
             }
-
-            $class = $this->_tools[$toolname];
-            $this->_tools_instance[$toolname] = new $class(Config::get($class));
+            else
+            {
+                if (is_string($tool_config) && !empty($tool_config))
+                {
+                    $class = $tool_config;
+                }
+                else
+                {
+                    $class = $this->_app_namespace . '\\tools\\' . ucfirst($toolname) . 'Tool';
+                }
+                if (!is_array($tool_config)) $tool_config = array();
+            }
+            $this->_tools_instance[$toolname] = new $class($this, $tool_config);
         }
 
         return $this->_tools_instance[$toolname];
@@ -266,14 +266,20 @@ class App
         $charset = Config::get('app.output_charset', 'utf-8');
         if (is_object($result) && method_exists($result, 'execute'))
         {
-            header('X-Powered-By-QeePHP: ' . QEE_VER);
-            header("Content-Type: text/html; charset={$charset}");
+            if (!headers_sent())
+            {
+                header('X-Powered-By-QeePHP: ' . QEE_VER);
+                header("Content-Type: text/html; charset={$charset}");
+            }
             return $result->execute();
         }
         elseif (is_string($result))
         {
-            header('X-Powered-By-QeePHP: ' . QEE_VER);
-            header("Content-Type: text/html; charset={$charset}");
+            if (!headers_sent())
+            {
+                header('X-Powered-By-QeePHP: ' . QEE_VER);
+                header("Content-Type: text/html; charset={$charset}");
+            }
             return $result;
         }
         else
