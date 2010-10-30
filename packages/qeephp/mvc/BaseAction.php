@@ -46,21 +46,20 @@ abstract class BaseAction
     function __execute()
     {
         if (!$this->__before_execute()) return;
-        $this->result = $this->execute();
+        $result = $this->execute();
+        if (!is_null($result)) $this->result = $result;
         $this->__after_execute();
     }
 
     /**
-     * 取得指定的视图对象
+     * 执行指定的视图对象
      *
      * @param array $vars
-     *
-     * @return View
      */
     function view(array $vars = null)
     {
         if (!is_array($vars)) $vars = array();
-        return $this->app->view($this->name, $vars);
+        $this->result = $this->app->view($this->name, $vars);
     }
 
     /**
