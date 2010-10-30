@@ -12,7 +12,7 @@ abstract class Config
      *
      * @var array
      */
-    private static $_config = array();
+    public static $_config = array();
 
     /**
      * 导入设置
@@ -34,7 +34,25 @@ abstract class Config
      */
     static function get($item, $default = null)
     {
-        return isset(self::$_config[$item]) ? self::$_config[$item] : $default;
+        if (strpos($item, '/') === false)
+        {
+            return array_key_exists($item, self::$_config) ? self::$_config[$item] : $default;
+        }
+
+        list($keys, $last) = self::_get_nested_keys($item);
+        $config =& self::$_config;
+        foreach ($keys as $key)
+        {
+            if (array_key_exists($key, $config))
+            {
+                $config =& $config[$key];
+            }
+            else
+            {
+                return $default;
+            }
+        }
+        return array_key_exists($last, $config) ? $config[$last] : $default;
     }
 
     /**
@@ -45,7 +63,29 @@ abstract class Config
      */
     static function set($item, $value)
     {
-        self::$_config[$item] = $value;
+        if (strpos($item, '/') === false)
+        {
+            self::$_config[$item] = $value;
+        }
+
+        list($keys, $last) = self::_get_nested_keys($item);
+        $config =& self::$_config;
+        foreach ($keys as $key)
+        {
+            if (!array_key_exists($key, $config))
+            {
+                $config[$key] = array();
+            }
+            $config =& $config[$key];
+        }
+        $config[$last] = $value;
+    }
+
+    static private function _get_nested_keys($key)
+    {
+        $keys = arr($key, '/');
+        $last = array_pop($keys);
+        return array($keys, $last);
     }
 }
 
