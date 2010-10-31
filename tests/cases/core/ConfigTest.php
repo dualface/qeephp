@@ -43,6 +43,12 @@ class ConfigTest extends TestCase
 
         $this->assertEquals('subvalue1', Config::get('nested/subkey1'));
         $this->assertEquals('deepvalue1', Config::get('nested/subnested/deepkey1'));
+
+        Config::$_config['first_key'] = 'first_value';
+        $this->assertEquals('first_value', Config::get(array('first_key', 'second_key')));
+        unset(Config::$_config['first_key']);
+        Config::$_config['second_key'] = 'second_value';
+        $this->assertEquals('second_value', Config::get(array('first_key', 'second_key')));
     }
 
     function test_set()

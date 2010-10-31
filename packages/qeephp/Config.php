@@ -29,14 +29,27 @@ abstract class Config
      *
      * @param string $item
      * @param mixed $default
+     * @param bool $found
      *
      * @return mixed
      */
-    static function get($item, $default = null)
+    static function get($item, $default = null, & $found = false)
     {
+        if (is_array($item))
+        {
+            $found = false;
+            foreach ($item as $key)
+            {
+                $return = self::get($key, $default, $found);
+                if ($found) return $return;
+            }
+            return $default;
+        }
+
         if (strpos($item, '/') === false)
         {
-            return array_key_exists($item, self::$_config) ? self::$_config[$item] : $default;
+            $found = array_key_exists($item, self::$_config);
+            return $found ? self::$_config[$item] : $default;
         }
 
         list($keys, $last) = self::_get_nested_keys($item);
@@ -52,7 +65,8 @@ abstract class Config
                 return $default;
             }
         }
-        return array_key_exists($last, $config) ? $config[$last] : $default;
+        $found = array_key_exists($last, $config);
+        return $found ? $config[$last] : $default;
     }
 
     /**
