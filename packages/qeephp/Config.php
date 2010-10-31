@@ -103,3 +103,7 @@ abstract class Config
     }
 }
 
+
+// 载入 QeePHP 框架默认值
+Config::$_config = require(__DIR__ . '/__defaults.php');
+

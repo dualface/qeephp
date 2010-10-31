@@ -12,9 +12,12 @@ use qeephp\debug\Debug;
  */
 class App
 {
-    const DEFAULT_ACTION          = 'index';
-    const DEFAULT_ACTION_ACCESSOR = 'action';
-    const DEFAULT_TIMEZONE        = 'Asia/Chongqing';
+    /**
+     * URL 中用于指示请求动作的参数名称
+     *
+     * @var string
+     */
+    public $action_accessor;
 
     /**
      * 应用程序基本路径
@@ -38,13 +41,6 @@ class App
     private $_tools_instance = array();
 
     /**
-     * 在 URL 中用什么参数指定动作名称
-     *
-     * @var string
-     */
-    private $_action_accessor;
-
-    /**
      * 应用程序实例
      *
      * @var App
@@ -61,17 +57,16 @@ class App
     function __construct($namespace, $base_path, $set_instance = true)
     {
         if ($set_instance) self::set_instance($this);
-
+        $this->action_accessor = Config::get(array('app.action_accessor', 'defaults.action_accessor'));
         $this->_app_namespace = $namespace;
         $this->_base_ath = rtrim($base_path, '/\\');
 
-        $timezone = Config::get('app.timezone', self::DEFAULT_TIMEZONE);
+        $timezone = Config::get(array('app.timezone', 'defaults.timezone'));
         date_default_timezone_set($timezone);
-
-        $this->_action_accessor = Config::get('app.action_name_accessor', self::DEFAULT_ACTION_ACCESSOR);
         set_exception_handler(array($this, '_exception_handler'));
 
-        $autoload_tools = arr(Config::get('app.autoload_tools'));
+        $autoload_tools = Config::get(array('app.autoload_tools', 'defaults.autoload_tools'));
+        $autoload_tools = arr($autoload_tools);
         foreach ($autoload_tools as $name)
         {
             $tool = $this->tool($name);
@@ -136,20 +131,21 @@ class App
      */
     function run($action_name = null)
     {
-        static $session_start = true;
-        if ($session_start && Config::get('app.session_autostart'))
+        static $session_not_started = true;
+        $session_autostart = Config::get(array('app.session_autostart', 'defaults.session_autostart'));
+        if ($session_not_started && $session_autostart)
         {
             session_start();
-            $session_start = false;
+            $session_not_started = false;
         }
 
         // 解析请求 URL 中的动作名称
         if (is_null($action_name))
         {
-            $action_name = request($this->_action_accessor);
+            $action_name = request($this->action_accessor);
             if (empty($action_name))
             {
-                $action_name = Config::get('app.default_action_name', self::DEFAULT_ACTION);
+                $action_name = Config::get(array('app.default_action', 'defaults.default_action'));
             }
         }
         $action_name = self::_format_action_name($action_name);
@@ -186,10 +182,10 @@ class App
         $action_name = self::_format_action_name($action_name);
         if (!$action_name)
         {
-            $action_name = Config::get('app.default_action_name', self::DEFAULT_ACTION);
+            $action_name = Config::get(array('app.default_action', 'defaults.default_action'));
         }
         $url = get_request_baseuri();
-        $url .= "?{$this->_action_accessor}={$action_name}";
+        $url .= "?{$this->action_accessor}={$action_name}";
         if ($params)
         {
             $url .= '&' . http_build_query($params);

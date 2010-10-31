@@ -53,7 +53,8 @@ class ConfigTest extends TestCase
 
     function test_set()
     {
-        Config::$_config = self::$_test_config;
+        $defaults = require(QEE_PATH . '/__defaults.php');
+        Config::$_config = array_merge($defaults, self::$_test_config);
         Config::set('key2', 'changed');
         $this->assertEquals('changed', Config::get('key2'));
 

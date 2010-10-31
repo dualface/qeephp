@@ -34,7 +34,7 @@ class ActionTest extends TestCase
         $result = ob_get_clean();
         $this->assertEquals('tests.emptyAction', $result);
 
-        Config::set('app.default_action_name', 'help');
+        Config::set('app.default_action', 'help');
         ob_start();
         $this->_app->run();
         $result = ob_get_clean();
@@ -95,7 +95,7 @@ class ActionTest extends TestCase
 
     protected function setup()
     {
-        Config::set('app.default_action_name', App::DEFAULT_ACTION);
+        Config::set('app.default_action', Config::get('defaults.default_action'));
     	$this->_app = new TestApp();
     }
 
