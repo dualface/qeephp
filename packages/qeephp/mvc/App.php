@@ -63,7 +63,6 @@ class App
 
         $timezone = Config::get(array('app.timezone', 'defaults.timezone'));
         date_default_timezone_set($timezone);
-        set_exception_handler(array($this, '_exception_handler'));
 
         $autoload_tools = Config::get(array('app.autoload_tools', 'defaults.autoload_tools'));
         $autoload_tools = arr($autoload_tools);
@@ -292,16 +291,6 @@ class App
     protected function _on_action_not_found($action_name)
     {
         throw ActionError::action_not_found_error($action_name);
-    }
-
-    /**
-     * QeePHP 自带的异常处理函数
-     *
-     * @param Exception $ex
-     */
-    function _exception_handler(\Exception $ex)
-    {
-        Debug::dump_exception($ex);
     }
 
     /**
