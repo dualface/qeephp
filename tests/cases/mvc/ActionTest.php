@@ -93,6 +93,26 @@ class ActionTest extends TestCase
         $this->assertEquals($more_tool_config, $more->config);
     }
 
+    function test_action_validate()
+    {
+        $request = $this->_app->request;
+        unset($request->get['failed']);
+
+        $result = $this->_app->run('validations.test');
+        $test   = array('validate_input', 'execute', 'validate_output');
+        $this->assertEquals($test, $result);
+
+        $request->get['failed'] = 'input';
+        $result = $this->_app->run('validations.test');
+        $test   = array('validate_input', 'validate_input_failed');
+        $this->assertEquals($test, $result);
+
+        $request->get['failed'] = 'output';
+        $result = $this->_app->run('validations.test');
+        $test   = array('validate_input', 'execute', 'validate_output', 'validate_output_failed');
+        $this->assertEquals($test, $result);
+    }
+
     protected function setup()
     {
         Config::set('app.default_action', Config::get('defaults.default_action'));
