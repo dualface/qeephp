@@ -3,7 +3,7 @@
 namespace qeephp\mvc;
 
 use qeephp\Config;
-use qeephp\debug\Debug;
+use qeephp\mvc\Request;
 
 /**
  * App 类封装了一个基本的应用程序对象
@@ -18,6 +18,13 @@ class App
      * @var string
      */
     public $action_accessor;
+
+    /**
+     * 当前请求
+     *
+     * @var Request
+     */
+    public $request;
 
     /**
      * 应用程序基本路径
@@ -71,6 +78,11 @@ class App
             $tool = $this->tool($name);
             if (method_exists($tool, 'autorun')) $tool->autorun();
         }
+
+        $this->request = new Request($_GET,
+                                     $_POST,
+                                     isset($_COOKIE) ? $_COOKIE : array(),
+                                     isset($_SESSION) ? $_SESSION : array());
     }
 
     /**
