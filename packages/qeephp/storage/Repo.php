@@ -3,29 +3,29 @@
 namespace qeephp\storage;
 
 use qeephp\Config;
-use qeephp\storage\adapter\IAdapterFinder;
+use qeephp\storage\IDataSourceFinder;
 
 abstract class Repo implements IModel
 {
-    private static $_adapter_instances = array();
+    private static $_ds_instances = array();
 
     /**
      * 为特定存储域选择匹配的存储服务实例
      *
      * @param string $domain
      *
-     * @return qeephp\storage\adapter\IAdapter
+     * @return qeephp\storage\IDataSource
      */
-    static function select_adapter($domain)
+    static function select_datasource($domain)
     {
-        if (!isset(self::$_adapter_instances[$domain]))
+        if (!isset(self::$_ds_instances[$domain]))
         {
             $config = Config::get("storage.domains.{$domain}");
             if (empty($config)) throw StorageError::not_set_domain_config_error($domain);
             $class = $config['class'];
-            self::$_adapter_instances[$domain] = new $class($config);
+            self::$_ds_instances[$domain] = new $class($config);
         }
-        return self::$_adapter_instances[$domain];
+        return self::$_ds_instances[$domain];
     }
 
     /**
@@ -47,7 +47,7 @@ abstract class Repo implements IModel
         }
         else
         {
-            $adapter = self::select_adapter($meta->domain());
+            $adapter = self::select_datasource($meta->domain());
             $record = $adapter->find_one($meta->collection(), $cond, null, $meta->props_to_fields);
             if (!is_array($record)) throw StorageError::entity_not_found_error($class, self::cache_key($class, $cond));
             $model = $meta->props_to_model($meta->fields_to_props($record));
@@ -90,7 +90,7 @@ abstract class Repo implements IModel
         {
             $idname  = $meta->idname;
             $idfield = $meta->props_to_fields[$idname];
-            $adapter = self::select_adapter($meta->domain());
+            $adapter = self::select_datasource($meta->domain());
             $finder  = $adapter->find($meta->collection(), array($idfield => $query_id_list))
                                ->set_model_class($class);
             while ($model = $finder->fetch())
@@ -114,7 +114,7 @@ abstract class Repo implements IModel
     static function find($class, $cond)
     {
         $meta = Meta::instance($class);
-        $adapter = self::select_adapter($meta->domain());
+        $adapter = self::select_datasource($meta->domain());
         return $adapter->find($meta->collection(), $cond, null, $meta->props_to_fields)
                        ->set_model_class($class);
     }
@@ -149,7 +149,7 @@ abstract class Repo implements IModel
         if (!$meta) $meta = $model->get_meta();
         $meta->raise_event(self::BEFORE_CREATE_EVENT, null, $model);
         $record = $meta->props_to_fields($model->__to_array());
-        $adapter = self::select_adapter($meta->domain());
+        $adapter = self::select_datasource($meta->domain());
         $id = $adapter->insert($meta->collection(), $record);
         $model->__save(true, $id);
         $meta->raise_event(self::AFTER_CREATE_EVENT, array($id), $model);
@@ -170,7 +170,7 @@ abstract class Repo implements IModel
         if (empty($changes)) return false;
         if (!$meta) $meta = $model->get_meta();
         $meta->raise_event(self::BEFORE_UPDATE_EVENT, null, $model);
-        $adapter = self::select_adapter($meta->domain());
+        $adapter = self::select_datasource($meta->domain());
         $result = $adapter->update_model($model, $meta);
         if ($result) $model->__save(false);
         $meta->raise_event(self::AFTER_UPDATE_EVENT, array($result), $model);
@@ -194,7 +194,7 @@ abstract class Repo implements IModel
         $meta = $model->get_meta();
         $meta->raise_event(self::BEFORE_DEL_EVENT, null, $model);
         $cond = ($meta->composite_id) ? $model->id() : array($meta->idname => $model->id());
-        $adapter = self::select_adapter($meta->domain());
+        $adapter = self::select_datasource($meta->domain());
         $result = $adapter->del($meta->collection(), $cond, $meta->props_to_fields);
         $meta->raise_event(self::AFTER_DEL_EVENT, array($result), $model);
         if (is_int($result) && $result > 1)
@@ -269,7 +269,7 @@ abstract class Repo implements IModel
             }
             $cond = array($meta->idname => $cond);
         }
-        $adapter = self::select_adapter($meta->domain());
+        $adapter = self::select_datasource($meta->domain());
         return $adapter->del($meta->collection(), $cond, $meta->props_to_fields);
     }
 

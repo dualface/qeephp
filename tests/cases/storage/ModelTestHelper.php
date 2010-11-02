@@ -15,7 +15,7 @@ require_once dirname(__DIR__) . '/__init.php';
 
 abstract class ModelTestHelper extends TestCase
 {
-    protected $_default_adapter;
+    protected $_default_ds;
     protected $_recordset;
 
     protected function setup()
@@ -24,8 +24,8 @@ abstract class ModelTestHelper extends TestCase
         StorageFixture::set_second_domain_config();
         $this->_cleanup();
 
-        $this->_default_adapter = Repo::select_adapter(StorageFixture::DEFAULT_NODE);
-        $this->_default_adapter->set_logger(Logger::instance('test'));
+        $this->_default_ds = Repo::select_datasource(StorageFixture::DEFAULT_NODE);
+        $this->_default_ds->set_logger(Logger::instance('test'));
         $this->_create_posts();
     }
 
@@ -36,10 +36,10 @@ abstract class ModelTestHelper extends TestCase
 
     protected function _cleanup()
     {
-        $adapter = Repo::select_adapter(Post::meta()->domain());
+        $adapter = Repo::select_datasource(Post::meta()->domain());
         $adapter->del('post', null);
         $adapter->del('comment', null);
-        $this->_default_adapter = null;
+        $this->_default_ds = null;
         $this->_recordset = null;
     }
 
@@ -47,7 +47,7 @@ abstract class ModelTestHelper extends TestCase
     {
         foreach ($recordset as $offset => $record)
         {
-            $result = $this->_default_adapter->insert($collection, $record);
+            $result = $this->_default_ds->insert($collection, $record);
             if ($idname)
             {
                 $recordset[$offset][$idname] = $result;
@@ -85,6 +85,6 @@ abstract class ModelTestHelper extends TestCase
     {
         $meta = Post::meta();
         $cond = array($meta->props_to_fields[$meta->idname] => $post_id);
-        return $this->_default_adapter->find_one($meta->collection(), $cond);
+        return $this->_default_ds->find_one($meta->collection(), $cond);
     }
 }

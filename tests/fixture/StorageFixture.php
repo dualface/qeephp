@@ -14,7 +14,7 @@ class StorageFixture
     static function set_default_mysql_domain_config()
     {
         $config = array(
-            'class'    => 'qeephp\\storage\\adapter\\MySQLAdapter',
+            'class'    => 'qeephp\\storage\\mysql\\DataSource',
             'host'     => 'localhost',
             'login'    => 'root',
             'password' => 'google',
