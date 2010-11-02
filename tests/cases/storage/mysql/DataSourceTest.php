@@ -1,43 +1,43 @@
 <?php
 
-namespace tests\cases\storage\adapter;
+namespace tests\cases\storage\mysql;
 
 use tests\fixture\StorageFixture;
 use tests\includes\TestCase;
 
-use qeephp\storage\adapter\MySQLAdapter;
+use qeephp\storage\mysql\DataSource;
 use qeephp\tools\Logger;
 
 require_once __DIR__ . '/__init.php';
 
-class MySQLAdapterTest extends TestCase
+class DataSourceTest extends TestCase
 {
     /**
-     * @var MySQLAdapter
+     * @var mysql\DataSource
      */
-    private $_mysql;
+    private $_ds;
     private $_handle;
 
     function test_is_connected()
     {
-        $this->assertTrue($this->_mysql->is_connected());
+        $this->assertTrue($this->_ds->is_connected());
     }
 
     function test_handle()
     {
-        $this->assertType('resource', $this->_mysql->handle());
+        $this->assertType('resource', $this->_ds->handle());
     }
 
     function test_find_one()
     {
-        $mysql = $this->_mysql;
+        $ds = $this->_ds;
 
         /**
          * #BEGIN EXAMPLE
          *
          * 按照指定条件查询，返回符合条件的第一个记录，如果查询结果为空则返回 false
          *
-         * @api MySQLAdapter::find_one()
+         * @api mysql\DataSource::find_one()
          * 
          * 查询条件有四种写法：
          * 
@@ -56,9 +56,9 @@ class MySQLAdapterTest extends TestCase
          *
          * -  字符串指定的任意查询条件
          */
-        $post1 = $mysql->find_one('post', 'post_id = 1');
-        $post2 = $mysql->find_one('post', array('post_id = ? OR title = ?', 1, 'post 1'));
-        $post3 = $mysql->find_one('post', 'post_id = 1', 'post_id, title');
+        $post1 = $ds->find_one('post', 'post_id = 1');
+        $post2 = $ds->find_one('post', array('post_id = ? OR title = ?', 1, 'post 1'));
+        $post3 = $ds->find_one('post', 'post_id = 1', 'post_id, title');
         // #END EXAMPLE
 
         $checks = array($post1, $post2, $post3);
@@ -76,14 +76,14 @@ class MySQLAdapterTest extends TestCase
 
     function test_find()
     {
-        $mysql = $this->_mysql;
+        $ds = $this->_ds;
 
         /**
          * #BEGIN EXAMPLE
          *
          * 按照指定条件进行查询，并返回实现了 IAdapterFinder 接口的查询对象
          *
-         * @api MySQLAdapter::find()
+         * @api mysql\DataSource::find()
          * @api MySQLFinder::sort()
          * @api MySQLFinder::skip()
          * @api MySQLFinder::limit()
@@ -95,7 +95,7 @@ class MySQLAdapterTest extends TestCase
          * 然后利用 IAdapterFinder::fetch() 方法提取数据。
          */
         // 查询 post_id 为 1, 3, 5 的记录
-        $finder = $mysql->find('post', array('post_id IN (?)', array(1, 3, 5)));
+        $finder = $ds->find('post', array('post_id IN (?)', array(1, 3, 5)));
         $posts1 = array();
         while ($post = $finder->fetch())
         {
@@ -103,10 +103,10 @@ class MySQLAdapterTest extends TestCase
         }
  
         // 查询 post_id 为 2, 4, 6 的记录
-        $posts2 = $mysql->find('post', array('post_id' => array(2, 4, 6)))->fetch_all();
+        $posts2 = $ds->find('post', array('post_id' => array(2, 4, 6)))->fetch_all();
 
         // 查询所有 post_id <= 3 的记录，并用 IAdapterFinder::fetch_all() 方法取出所有查询结果
-        $posts3 = $mysql->find('post', 'post_id <= 3', 'post_id, title')->fetch_all();
+        $posts3 = $ds->find('post', 'post_id <= 3', 'post_id, title')->fetch_all();
 
         /**
          * 查询 post_id <= 10 的记录；
@@ -118,7 +118,7 @@ class MySQLAdapterTest extends TestCase
         $func = function ($record) use (& $titles) {
             $titles[] = $record['title'];
         };
-        $mysql->find('post', array('post_id <= ?', 10), 'title')
+        $ds->find('post', array('post_id <= ?', 10), 'title')
               ->sort('title ASC')
               ->skip(3)
               ->limit(4)
@@ -156,14 +156,14 @@ class MySQLAdapterTest extends TestCase
 
     function test_insert()
     {
-        $mysql = $this->_mysql;
+        $ds = $this->_ds;
 
         /**
          * #BEGIN EXAMPLE
          *
          * 插入一条记录
          *
-         * @api MySQLAdapter::insert()
+         * @api mysql\DataSource::insert()
          *
          * 插入记录时，如果有自增类型的主键字段，可以不提供该字段的值。
          *
@@ -172,16 +172,16 @@ class MySQLAdapterTest extends TestCase
          */
         // post 表的 post_id 字段是自增类型主键，因此 insert() 方法可以返回插入记录的主键值
         $new_post = array('title' => 'new post');
-        $new_post_id = $mysql->insert('post', $new_post);
+        $new_post_id = $ds->insert('post', $new_post);
 
         // 即便是自增类型的主键，也可以直接指定一个主键值
         $other_post = array('title' => 'new post', 'post_id' => $new_post_id + 1);
-        $other_post_id = $mysql->insert('post', $other_post);
+        $other_post_id = $ds->insert('post', $other_post);
 
         // 可以使用 $alias 参数指定字段别名
         $alias = array('t' => 'title');
         $last_post = array('t' => 'last post');
-        $last_post_id = $mysql->insert('post', $last_post, $alias);
+        $last_post_id = $ds->insert('post', $last_post, $alias);
         // #END EXAMPLE
 
         $this->assertType(\PHPUnit_Framework_Constraint_IsType::TYPE_INT, $new_post_id);
@@ -192,9 +192,9 @@ class MySQLAdapterTest extends TestCase
 
     function test_update()
     {
-        $mysql = $this->_mysql;
+        $ds = $this->_ds;
         $currents = array();
-        $mysql->find('post', 'post_id <= 10')->each(function ($record) use (& $currents) {
+        $ds->find('post', 'post_id <= 10')->each(function ($record) use (& $currents) {
             $currents[$record['post_id']] = $record;
         });
 
@@ -203,31 +203,31 @@ class MySQLAdapterTest extends TestCase
          *
          * 更新符合条件的记录
          *
-         * @api MySQLAdapter::update()
+         * @api mysql\DataSource::update()
          *
          * update() 方法的更新条件和 find_one()、find() 方法的查询条件写法一致。
          */
         // 更新 post_id = 1 的记录，将 title 更新为 post 1 updated
         $update = array('title' => 'post 1 updated');
-        $result1 = $mysql->update('post', array('post_id' => 1), $update);
+        $result1 = $ds->update('post', array('post_id' => 1), $update);
 
         // 更新所有 post_id <= 5 的记录，将这些记录的 click_count 字段值增加 100
         $update = 'click_count = click_count + 100';
-        $result2 = $mysql->update('post', 'post_id <= 5', $update);
+        $result2 = $ds->update('post', 'post_id <= 5', $update);
 
         // 更新所有 post_id > 5 AND post_id <= 10的记录，将 title 字段更新为 updated，
         // click_count 增加 50
         $update = array('title' => 'updated', 'click_count = click_count + 50');
-        $result3 = $mysql->update('post', 'post_id > 5 AND post_id <= 10', $update);
+        $result3 = $ds->update('post', 'post_id > 5 AND post_id <= 10', $update);
         // #END EXAMPLE
 
         $this->assertEquals(1, $result1);
-        $reload = $mysql->find_one('post', 'post_id = 1');
+        $reload = $ds->find_one('post', 'post_id = 1');
         $this->assertEquals('post 1 updated', $reload['title']);
         $this->assertEquals(5, $result2);
         $this->assertEquals(5, $result3);
 
-        $new = $mysql->find('post', 'post_id <= 10')->fetch_all();
+        $new = $ds->find('post', 'post_id <= 10')->fetch_all();
         foreach ($new as $record)
         {
             $post_id = $record['post_id'];
@@ -245,23 +245,23 @@ class MySQLAdapterTest extends TestCase
 
     function test_del()
     {
-        $mysql = $this->_mysql;
+        $ds = $this->_ds;
 
         /**
          * #BEGIN EXAMPLE
          *
          * 删除符合条件的记录
          *
-         * @api MySQLAdapter::del()
+         * @api mysql\DataSource::del()
          *
          * del() 方法返回被删除的记录数。
          *
          * 删除条件的写法与 find_one()、find() 方法相同。
          */
-        $result1 = $mysql->del('post', array('post_id' => 2));
-        $result2 = $mysql->del('post', 'post_id >= 8 AND post_id <= 10');
+        $result1 = $ds->del('post', array('post_id' => 2));
+        $result2 = $ds->del('post', 'post_id >= 8 AND post_id <= 10');
         // 删除所有记录
-        $result3 = $mysql->del('post', null);
+        $result3 = $ds->del('post', null);
         // #END EXAMPLE
 
         $this->assertEquals(1, $result1);
@@ -271,25 +271,25 @@ class MySQLAdapterTest extends TestCase
 
     function test_commit()
     {
-        $mysql = $this->_mysql;
+        $ds = $this->_ds;
         /**
          * #BEGIN EXAMPLE
          *
          * 提交数据库事务
          *
-         * @api MySQLAdapter::begin()
-         * @api MySQLAdapter::commit()
+         * @api mysql\DataSource::begin()
+         * @api mysql\DataSource::commit()
          * 
          * 事务中所有的查询都成功后，commit() 方法才能成功执行。
          */
-        $mysql->begin();
+        $ds->begin();
         $title = "new post " . mt_rand(1, 999);
         $new_post = array('title' => $title);
-        $new_post_id = $mysql->insert('post', $new_post);
-        $mysql->commit();
+        $new_post_id = $ds->insert('post', $new_post);
+        $ds->commit();
         // #END EXAMPLE
 
-        $post = $this->_mysql->find_one('post', array('post_id' => $new_post_id));
+        $post = $this->_ds->find_one('post', array('post_id' => $new_post_id));
         $this->assertType('array', $post);
         $this->assertArrayHasKey('post_id', $post);
         $this->assertArrayHasKey('title', $post);
@@ -299,48 +299,48 @@ class MySQLAdapterTest extends TestCase
 
     function test_rollback()
     {
-        $mysql = $this->_mysql;
+        $ds = $this->_ds;
 
         /**
          * #BEGIN EXAMPLE
          *
          * 回滚数据库事务
          *
-         * @api MySQLAdapter::begin()
-         * @api MySQLAdapter::rollback()
+         * @api mysql\DataSource::begin()
+         * @api mysql\DataSource::rollback()
          *
          * 不管事务中是否有失败的查询，总是撤销所有改动。
          */
-        $mysql->begin();
+        $ds->begin();
         $title = "new post " . mt_rand(1, 999);
         $new_post = array('title' => $title);
-        $new_post_id = $mysql->insert('post', $new_post);
-        $mysql->rollback();
+        $new_post_id = $ds->insert('post', $new_post);
+        $ds->rollback();
         // #END EXAMPLE
 
-        $post = $mysql->find_one('post', array('post_id' => $new_post_id));
+        $post = $ds->find_one('post', array('post_id' => $new_post_id));
         $this->assertFalse($post);
     }
 
     function test_escape()
     {
-        $this->assertEquals(123, $this->_mysql->escape(123));
-        $this->assertEquals(123.5, $this->_mysql->escape(123.5));
-        $this->assertEquals("'abc'", $this->_mysql->escape('abc'));
-        $this->assertEquals('TRUE', $this->_mysql->escape(true));
-        $this->assertEquals('FALSE', $this->_mysql->escape(false));
-        $this->assertEquals('NULL', $this->_mysql->escape(null));
-        $this->assertEquals("'abc\\'def'", $this->_mysql->escape('abc\'def'));
-        $this->assertEquals("'abc\\\\def'", $this->_mysql->escape('abc\\def'));
-        $this->assertEquals("'abc',123", $this->_mysql->escape(array('abc', 123)));
+        $this->assertEquals(123, $this->_ds->escape(123));
+        $this->assertEquals(123.5, $this->_ds->escape(123.5));
+        $this->assertEquals("'abc'", $this->_ds->escape('abc'));
+        $this->assertEquals('TRUE', $this->_ds->escape(true));
+        $this->assertEquals('FALSE', $this->_ds->escape(false));
+        $this->assertEquals('NULL', $this->_ds->escape(null));
+        $this->assertEquals("'abc\\'def'", $this->_ds->escape('abc\'def'));
+        $this->assertEquals("'abc\\\\def'", $this->_ds->escape('abc\\def'));
+        $this->assertEquals("'abc',123", $this->_ds->escape(array('abc', 123)));
     }
 
     function test_id()
     {
-        $this->assertEquals("`domain`", $this->_mysql->id('domain'));
-        $this->assertEquals("`domain`.`collection`", $this->_mysql->id('domain.collection'));
-        $this->assertEquals("`collection`.*", $this->_mysql->id('collection.*'));
-        $this->assertEquals("*", $this->_mysql->id('*'));
+        $this->assertEquals("`domain`", $this->_ds->id('domain'));
+        $this->assertEquals("`domain`.`collection`", $this->_ds->id('domain.collection'));
+        $this->assertEquals("`collection`.*", $this->_ds->id('collection.*'));
+        $this->assertEquals("*", $this->_ds->id('*'));
     }
 
     protected function setup()
@@ -348,10 +348,10 @@ class MySQLAdapterTest extends TestCase
         global $logger;
 
         $config = StorageFixture::set_default_mysql_domain_config();
-        $this->_mysql = new MySQLAdapter($config);
-        $this->_mysql->connect();
-        $this->_mysql->set_logger(Logger::instance('test'));
-        $this->_handle = $this->_mysql->handle();
+        $this->_ds = new DataSource($config);
+        $this->_ds->connect();
+        $this->_ds->set_logger(Logger::instance('test'));
+        $this->_handle = $this->_ds->handle();
 
         $this->tearDown();
 
@@ -369,12 +369,12 @@ class MySQLAdapterTest extends TestCase
 
     private function _create_recordset($table, array $recordset)
     {
-        $table = $this->_mysql->id($table);
+        $table = $this->_ds->id($table);
         foreach ($recordset as $record)
         {
             foreach ($record as $key => $value)
             {
-                $record[$this->_mysql->id($key)] = $this->_mysql->escape($value);
+                $record[$this->_ds->id($key)] = $this->_ds->escape($value);
                 unset($record[$key]);
             }
 

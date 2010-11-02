@@ -1,10 +1,11 @@
 <?php
 
-namespace qeephp\storage\adapter;
+namespace qeephp\storage\mysql;
 
 use qeephp\storage\Meta;
+use qeephp\storage\IFinder;
 
-class MySQLFinder implements IAdapterFinder
+class Finder implements IFinder
 {
     private $_adapter;
     private $_collection;
@@ -19,7 +20,7 @@ class MySQLFinder implements IAdapterFinder
     private $_meta;
     private $_query_completed = false;
 
-    function __construct(MySQLAdapter $adapter, $collection, $cond, $fields = null, array $alias = null)
+    function __construct(DataSource $adapter, $collection, $cond, $fields = null, array $alias = null)
     {
         $this->_adapter = $adapter;
         $this->_collection = $collection;
@@ -38,7 +39,7 @@ class MySQLFinder implements IAdapterFinder
      *
      * @param string $class
      *
-     * @return MySQLFinder
+     * @return Finder
      */
     function set_model_class($class)
     {
@@ -52,7 +53,7 @@ class MySQLFinder implements IAdapterFinder
      *
      * @param mixed $sort
      *
-     * @return MySQLFinder
+     * @return Finder
      */
     function sort($sort)
     {
@@ -65,7 +66,7 @@ class MySQLFinder implements IAdapterFinder
      *
      * @param int $skip
      *
-     * @return MySQLFinder
+     * @return Finder
      */
     function skip($skip)
     {
@@ -78,7 +79,7 @@ class MySQLFinder implements IAdapterFinder
      *
      * @param int $limit
      * 
-     * @return MySQLFinder
+     * @return Finder
      */
     function limit($limit)
     {

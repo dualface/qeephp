@@ -1,12 +1,10 @@
 <?php
 
-namespace qeephp\storage\adapter;
+namespace qeephp\storage;
 
 use qeephp\tools\ILogger;
-use qeephp\storage\BaseModel;
-use qeephp\storage\Meta;
 
-interface IAdapter
+interface IDataSource
 {
     /**
      * 设置日志服务对象
@@ -40,7 +38,7 @@ interface IAdapter
      * @param string|array $fields
      * @param array $alias
      *
-     * @return IAdapterFinder
+     * @return IDataSourceFinder
      */
     function find($table, $cond, $fields = null, array $alias = null);
 

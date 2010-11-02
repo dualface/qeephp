@@ -26,4 +26,5 @@ $logger_config = array(
     'level' => ILogger::TRACE,
 );
 Config::set('logger.test', $logger_config);
+date_default_timezone_set(Config::get(array('app.timezone', 'defaults.timezone')));
 

@@ -1,15 +1,15 @@
 <?php
 
-namespace qeephp\storage\adapter;
+namespace qeephp\storage;
 
-interface IAdapterFinder
+interface IFinder
 {
     /**
      * 为查询结果指定模型类
      *
      * @param string $class
      *
-     * @return IAdapterFinder
+     * @return IFinder
      */
     function set_model_class($class);
 

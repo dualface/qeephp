@@ -1,15 +1,16 @@
 <?php
 
-namespace qeephp\storage\adapter;
+namespace qeephp\storage\mysql;
 
 use qeephp\tools\ILogger;
+use qeephp\storage\IDataSource;
 use qeephp\storage\IModel;
 use qeephp\storage\BaseModel;
 use qeephp\storage\Meta;
 use qeephp\storage\Expr;
 use qeephp\storage\StorageError;
 
-class MySQLAdapter implements IAdapter, IModel
+class DataSource implements IDataSource, IModel
 {
     /**
      * 配置
@@ -134,7 +135,7 @@ class MySQLAdapter implements IAdapter, IModel
 
     function find($table, $cond, $fields = null, array $alias = null)
     {
-        return new MySQLFinder($this, $table, $cond, $fields, $alias);
+        return new Finder($this, $table, $cond, $fields, $alias);
     }
 
     function insert($table, array $values, array $alias = null)
@@ -380,7 +381,7 @@ class MySQLAdapter implements IAdapter, IModel
 
         if ($this->_logger)
         {
-            $this->_logger->log(($result) ? ILogger::DEBUG : ILogger::ERROR, "MySQLAdapter: {$sql}");
+            $this->_logger->log(($result) ? ILogger::DEBUG : ILogger::ERROR, "DataSource: {$sql}");
         }
 
         $this->query_count++;
@@ -505,7 +506,7 @@ function _mysql_escape($value)
     if (is_bool($value)) return ($value) ? 'TRUE' : 'FALSE';
     if (is_array($value))
     {
-        return implode(',', array_map('qeephp\\storage\\adapter\\_mysql_escape', $value));
+        return implode(',', array_map('qeephp\\storage\\mysql\\_mysql_escape', $value));
     }
     return "'" . addslashes($value) . "'";
 }
